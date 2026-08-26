@@ -1,20 +1,21 @@
-# 🏥 Bharat Bio. Chem. — Doorstep Diagnostic Pathology Portal
+# 🏥 Karim Path Lab — Doorstep Diagnostic Pathology Portal
 
-A modern, high-performance web portal and **Digital Booking Pass Generator** built for **Bharat Bio. Chem. Diagnostic Pathology Lab** operating in **Patna, Bihar**. 
+A modern, high-performance web portal and **Digital Booking Pass Generator** built for **Karim Path Lab** operating in **Patna, Bihar**. 
 
-This application allows patients to browse NABL-standard health checkup packages, select collection time slots, receive instant flat discounts (10%–20% OFF), and generate high-contrast **Digital Diagnostic Passes** downloadable as images or shareable via WhatsApp.
+This application allows patients to connect directly with top doctors, leading hospitals, and NABL-certified super labs across Patna for 100% accurate, doctor-verified diagnostic reports delivered straight to their phone with Flat 20% OFF.
 
 ---
 
 ## 🌟 Key Features
 
 - 🔬 **NABL-Standard Testing Showcase**: Features comprehensive lab packages including CBC, Thyroid Profile, LFT, KFT, Lipid Profile, Dengue Panel, and Full Body Health Checkups.
+- 🩺 **Doctor & Hospital Medical Network**: Connects patients directly with Patna's leading specialist doctors, multi-specialty hospitals, and central labs for doctor-verified 100% accurate reports.
 - 📱 **Open Graph & Twitter Mobile Preview Cards**: Fully configured `og:image`, `og:title`, `og:description`, and `twitter:card` tags so sharing the portal link on WhatsApp, Twitter/X, or Facebook renders a rich, mobile-optimized preview card (`1200x630`).
 - 💳 **Dynamic HTML5 Canvas Card Generator**: 
   - Generates high-definition Retina-grade PNG booking passes dynamically.
   - Automatically calculates canvas height to prevent layout clipping.
-  - Includes patient initials badge, reference code, barcode graphic, and complete address breakdown.
-- 🏷️ **Automated Price & Discount Calculator**: Displays MRP, discount savings (Flat 10% OFF), and net payable amounts across UI cards and generated passes.
+  - Includes patient initials badge, reference code (`#KPL-XXXXXX`), barcode graphic, and complete address breakdown.
+- 🏷️ **Automated Price & Discount Calculator**: Displays MRP, discount savings (Flat 20% OFF), and net payable amounts across UI cards and generated passes.
 - 📱 **WhatsApp Direct Dispatch**: One-click booking pass forwarding and site link sharing to Phlebotomist **Saba Hussain (+91 72772 69501)** via Web Share API or WhatsApp direct links.
 - 🎨 **Clinical Emerald Theme**: Light, sterile, medical-grade aesthetic utilizing glassmorphism, smooth animations, and clean gradients.
 - 📱 **100% Mobile-First Responsive**: Tailored layout for mobile devices, tablets, and desktop displays.
@@ -70,7 +71,7 @@ Then open `http://localhost:8000` in your browser.
 
 ## 📞 Laboratory & Phlebotomy Contact
 
-- **Lab Name**: Bharat Bio. Chem. Diagnostics
+- **Lab Name**: Karim Path Lab Diagnostics
 - **Location**: Patna, Bihar
 - **Lead Phlebotomist**: Saba Hussain
 - **Contact Number**: [+91 72772 69501](tel:+917277269501)
@@ -80,4 +81,4 @@ Then open `http://localhost:8000` in your browser.
 
 ## 📜 License
 
-Created for Bharat Bio. Chem. Diagnostics, Patna. All rights reserved.
+Created for Karim Path Lab Diagnostics, Patna. All rights reserved.
