@@ -9,12 +9,13 @@ This application allows patients to browse NABL-standard health checkup packages
 ## 🌟 Key Features
 
 - 🔬 **NABL-Standard Testing Showcase**: Features comprehensive lab packages including CBC, Thyroid Profile, LFT, KFT, Lipid Profile, Dengue Panel, and Full Body Health Checkups.
+- 📱 **Open Graph & Twitter Mobile Preview Cards**: Fully configured `og:image`, `og:title`, `og:description`, and `twitter:card` tags so sharing the portal link on WhatsApp, Twitter/X, or Facebook renders a rich, mobile-optimized preview card (`1200x630`).
 - 💳 **Dynamic HTML5 Canvas Card Generator**: 
   - Generates high-definition Retina-grade PNG booking passes dynamically.
   - Automatically calculates canvas height to prevent layout clipping.
   - Includes patient initials badge, reference code, barcode graphic, and complete address breakdown.
-- 🏷️ **Automated Price & Discount Calculator**: Displays MRP, discount savings (Flat 10%–20% OFF), and net payable amounts across UI cards and generated passes.
-- 📱 **WhatsApp Direct Dispatch**: One-click booking pass forwarding to Phlebotomist **Saba Hussain (+91 72772 69501)** via Web Share API or WhatsApp direct links.
+- 🏷️ **Automated Price & Discount Calculator**: Displays MRP, discount savings (Flat 10% OFF), and net payable amounts across UI cards and generated passes.
+- 📱 **WhatsApp Direct Dispatch**: One-click booking pass forwarding and site link sharing to Phlebotomist **Saba Hussain (+91 72772 69501)** via Web Share API or WhatsApp direct links.
 - 🎨 **Clinical Emerald Theme**: Light, sterile, medical-grade aesthetic utilizing glassmorphism, smooth animations, and clean gradients.
 - 📱 **100% Mobile-First Responsive**: Tailored layout for mobile devices, tablets, and desktop displays.
 
@@ -27,6 +28,7 @@ patho-card/
 ├── index.html                           # Main web application & Canvas card engine
 ├── images/                              # Diagnostic & Lab branding assets
 │   ├── tanrica-medical-laboratory.svg   # Official laboratory brand logo
+│   ├── og-preview.png                   # Open Graph & WhatsApp link preview banner (1200x630)
 │   ├── lab-room.jpg                     # High-res central lab room showcase
 │   ├── sample-test.jpg                  # Sterile sample collection vials banner
 │   ├── herney-microscope.jpg            # Automated pathology equipment image
