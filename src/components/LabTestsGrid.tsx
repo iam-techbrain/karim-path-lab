@@ -30,8 +30,21 @@ export default function LabTestsGrid({ onOpenBooking }: LabTestsGridProps) {
     }
   };
 
-  const regularTests = TEST_PACKAGES.filter((t) => !t.featured);
-  const featuredPackage = TEST_PACKAGES.find((t) => t.featured);
+  const [testList, setTestList] = React.useState(TEST_PACKAGES);
+
+  React.useEffect(() => {
+    fetch("/api/admin/data")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.services && data.services.length > 0) {
+          setTestList(data.services);
+        }
+      })
+      .catch((err) => console.log("Live services sync fallback:", err));
+  }, []);
+
+  const regularTests = testList.filter((t) => !t.featured);
+  const featuredPackage = testList.find((t) => t.featured);
 
   return (
     <section id="tests" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 scroll-mt-20">
@@ -68,7 +81,7 @@ export default function LabTestsGrid({ onOpenBooking }: LabTestsGridProps) {
               Precise Pathology Results Powered by Automation
             </h4>
             <p className="text-emerald-100 text-xs sm:text-sm mt-1 max-w-xl font-medium">
-              Every blood &amp; urine sample is analyzed on fully automated NABL-calibrated analyzers for maximum accuracy.
+              Every diagnostic sample is analyzed on fully automated NABL-calibrated analyzers for maximum accuracy.
             </p>
           </div>
         </div>

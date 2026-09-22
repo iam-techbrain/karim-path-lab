@@ -32,16 +32,17 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://karimpathlab.com"),
-  title: "Karim Path Lab — Doorstep Blood & Urine Testing in Patna",
+  title: "Karim Path Lab — Doorstep Diagnostic Testing & Sample Collection in Patna",
   description:
-    "Doorstep blood & urine sample collection in Patna, Bihar by Karim Path Lab. NABL-grade CBC, Thyroid, Dengue, Lipid & Full Health Checkups at home with 20% OFF.",
+    "Doorstep diagnostic sample collection in Patna, Bihar by Karim Path Lab. NABL-grade CBC, Thyroid, Dengue, Lipid & Full Health Checkups at home with 20% OFF.",
   keywords: [
     "Karim Path Lab Patna",
     "Pathology Lab Patna",
-    "Doorstep Blood Test Patna",
+    "Doorstep Diagnostic Test Patna",
     "Home Sample Collection Patna",
     "CBC Test Patna",
     "Thyroid Test Patna",
+    "Partner Labs Patna",
   ],
   authors: [{ name: "Karim Path Lab Diagnostic Pathology" }],
   icons: {
@@ -52,9 +53,9 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: "https://karimpathlab.com/",
-    title: "Karim Path Lab — Doorstep Blood & Urine Testing in Patna",
+    title: "Karim Path Lab — Doorstep Diagnostic Testing & Sample Collection in Patna",
     description:
-      "Certified Doorstep Blood & Urine Collection in Patna with FLAT 20% OFF by Karim Path Lab. NABL-grade testing, zero home collection fee, and fast 6-12 hr WhatsApp PDF reports.",
+      "Certified Doorstep Diagnostic Sample Collection in Patna with FLAT 20% OFF by Karim Path Lab. NABL-grade testing, zero home collection fee, and fast 6-12 hr WhatsApp PDF reports.",
     images: [
       {
         url: "/images/og-preview.png",
@@ -68,9 +69,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Karim Path Lab — Doorstep Blood & Urine Testing in Patna",
+    title: "Karim Path Lab — Doorstep Diagnostic Testing & Sample Collection in Patna",
     description:
-      "Certified Doorstep Blood & Urine Collection in Patna with FLAT 20% OFF by Karim Path Lab. NABL-grade testing, zero home collection fee, and fast WhatsApp PDF reports.",
+      "Certified Doorstep Diagnostic Sample Collection in Patna with FLAT 20% OFF by Karim Path Lab. NABL-grade testing, zero home collection fee, and fast WhatsApp PDF reports.",
     images: ["/images/og-preview.png"],
   },
 };
@@ -95,7 +96,7 @@ export default function RootLayout({
     url: "https://karimpathlab.com/",
     priceRange: "₹₹",
     description:
-      "Karim Path Lab - NABL-Standard Doorstep Blood & Urine Collection in Patna with fast WhatsApp PDF reports.",
+      "Karim Path Lab - NABL-Standard Doorstep Diagnostic Testing & Sample Collection in Patna with fast WhatsApp PDF reports.",
   };
 
   return (

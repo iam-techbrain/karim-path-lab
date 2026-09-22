@@ -34,7 +34,7 @@ export default function Footer({ onOpenBooking }: FooterProps) {
               </div>
             </div>
             <p className="text-slate-500 text-xs leading-relaxed font-medium">
-              Doorstep blood &amp; urine sample collection in Patna, Bihar. NABL accuracy standards.
+              Doorstep diagnostic sample collection in Patna, Bihar. NABL accuracy standards.
             </p>
           </div>
 
@@ -49,12 +49,22 @@ export default function Footer({ onOpenBooking }: FooterProps) {
                 </a>
               </li>
               <li>
+                <a href="#network" className="hover:text-emerald-700 transition-colors">
+                  Hospitals &amp; Labs Network
+                </a>
+              </li>
+              <li>
                 <button
                   onClick={() => onOpenBooking()}
                   className="hover:text-emerald-700 transition-colors text-left cursor-pointer"
                 >
-                  Book Sample Collection
+                  Book Home Collection
                 </button>
+              </li>
+              <li>
+                <a href="/admin" className="text-slate-400 hover:text-emerald-700 transition-colors text-[11px]">
+                  🔒 Admin Portal
+                </a>
               </li>
               <li>
                 <a href="#phlebotomist" className="hover:text-emerald-700 transition-colors">

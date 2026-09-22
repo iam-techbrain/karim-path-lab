@@ -1,0 +1,186 @@
+{
+  "updatedAt": "2026-09-22T15:12:00.000Z",
+  "services": [
+    {
+      "id": "cbc",
+      "name": "Complete Blood Count (CBC)",
+      "description": "Hemoglobin, Platelets, WBC, RBC & 24 essential parameters.",
+      "price": 320,
+      "originalPrice": 400,
+      "discountPercentage": 20,
+      "icon": "Activity",
+      "badge": "20% OFF",
+      "featured": false
+    },
+    {
+      "id": "thyroid",
+      "name": "Thyroid Profile (T3 T4 TSH)",
+      "description": "Complete thyroid hormone assessment for metabolism & weight control.",
+      "price": 480,
+      "originalPrice": 600,
+      "discountPercentage": 20,
+      "icon": "FlaskConical",
+      "badge": "20% OFF",
+      "featured": false
+    },
+    {
+      "id": "lft",
+      "name": "Liver Function Test (LFT)",
+      "description": "Bilirubin, SGOT, SGPT, Alkaline Phosphatase & Protein Profile.",
+      "price": 480,
+      "originalPrice": 600,
+      "discountPercentage": 20,
+      "icon": "TestTube2",
+      "badge": "20% OFF",
+      "featured": false
+    },
+    {
+      "id": "kft",
+      "name": "Kidney Function Test (KFT)",
+      "description": "Urea, Uric Acid, Serum Creatinine, Sodium, Potassium & Electrolytes.",
+      "price": 680,
+      "originalPrice": 850,
+      "discountPercentage": 20,
+      "icon": "Dna",
+      "badge": "20% OFF",
+      "featured": false
+    },
+    {
+      "id": "lipid",
+      "name": "Lipid Profile",
+      "description": "Total Cholesterol, HDL, LDL, VLDL & Triglycerides heart assessment.",
+      "price": 320,
+      "originalPrice": 400,
+      "discountPercentage": 20,
+      "icon": "HeartPulse",
+      "badge": "20% OFF",
+      "featured": false
+    },
+    {
+      "id": "dengue",
+      "name": "Dengue & Fever Panel",
+      "description": "NS1 Antigen, IgG/IgM Antibodies, Malaria & Complete Platelet check.",
+      "price": 800,
+      "originalPrice": 1000,
+      "discountPercentage": 20,
+      "icon": "Thermometer",
+      "badge": "20% OFF",
+      "featured": false
+    },
+    {
+      "id": "full-body",
+      "name": "Complete Health Checkup",
+      "description": "60+ Vital Tests: CBC + Thyroid Profile + Liver Function Test (LFT) + Kidney Function Test (KFT) + Lipid Profile & Urine Examination.",
+      "price": 2000,
+      "originalPrice": 2500,
+      "discountPercentage": 20,
+      "icon": "Award",
+      "badge": "★ MOST POPULAR PACKAGE",
+      "featured": true
+    }
+  ],
+  "hospitals": [
+    {
+      "id": "hosp-1",
+      "name": "Paras HMRI Hospital",
+      "location": "Raja Bazar, Bailey Road, Patna",
+      "type": "Super Specialty Hospital",
+      "specialities": ["Cardiology", "Oncology", "Orthopedics", "Neuro Sciences"],
+      "doctorNetworkCount": 45,
+      "badge": "NABH Accredited Partner",
+      "isFeatured": true
+    },
+    {
+      "id": "hosp-2",
+      "name": "Ruban Memorial Hospital",
+      "location": "Patliputra Colony, Patna",
+      "type": "Multi-Specialty Hospital",
+      "specialities": ["Gastroenterology", "Nephrology", "Urology", "Internal Medicine"],
+      "doctorNetworkCount": 30,
+      "badge": "Leading Patna Multi-Specialty",
+      "isFeatured": true
+    },
+    {
+      "id": "hosp-3",
+      "name": "Mediversal Multi-Specialty Hospital",
+      "location": "Doctors Colony, Kankarbagh, Patna",
+      "type": "Advanced Multi-Specialty",
+      "specialities": ["Critical Care", "Diabetology", "Pulmonology", "General Surgery"],
+      "doctorNetworkCount": 28,
+      "badge": "Emergency & ICU Tie-up",
+      "isFeatured": true
+    },
+    {
+      "id": "hosp-4",
+      "name": "Ford Hospital & Research Centre",
+      "location": "New Bypass Road, Khemnichak, Patna",
+      "type": "Multi-Specialty & Trauma Centre",
+      "specialities": ["Trauma Care", "Cardiology", "General Medicine", "Pediatrics"],
+      "doctorNetworkCount": 22,
+      "badge": "Specialist Network",
+      "isFeatured": false
+    },
+    {
+      "id": "hosp-5",
+      "name": "AIIMS & PMCH Senior Specialists Network",
+      "location": "Patna City & Phulwarisharif, Patna",
+      "type": "Doctor Consultation & Clinical Tie-up",
+      "specialities": ["Advanced Pathology", "Endocrinology", "Rheumatology", "Hematology"],
+      "doctorNetworkCount": 50,
+      "badge": "Apex Doctor Tie-up",
+      "isFeatured": true
+    }
+  ],
+  "labs": [
+    {
+      "id": "lab-1",
+      "name": "Dr. Lal PathLabs",
+      "accreditation": "NABL & CAP Certified",
+      "category": "National Reference Laboratory",
+      "description": "India's premier diagnostic chain. Comprehensive 4,500+ diagnostic tests with ultra-sensitive robotic analyzers.",
+      "turnaroundTime": "6 – 12 Hours",
+      "badge": "Top Prescribed",
+      "isFeatured": true
+    },
+    {
+      "id": "lab-2",
+      "name": "Thyrocare Technologies",
+      "accreditation": "NABL, CAP & ICMR Approved",
+      "category": "Preventive Care & Hormone Specialist",
+      "description": "World-class automated testing for Thyroid, Lipid, Liver, Vitamin D/B12, and comprehensive preventive packages.",
+      "turnaroundTime": "8 – 14 Hours",
+      "badge": "Most Affordable",
+      "isFeatured": true
+    },
+    {
+      "id": "lab-3",
+      "name": "Agilus Diagnostics (SRL)",
+      "accreditation": "NABL Accredited Super-Lab",
+      "category": "Multi-Disciplinary Diagnostic Lab",
+      "description": "Advanced specialized diagnostic testing across Histopathology, Cytology, and molecular pathology.",
+      "turnaroundTime": "8 – 16 Hours",
+      "badge": "Doctor Trusted",
+      "isFeatured": true
+    },
+    {
+      "id": "lab-4",
+      "name": "Pathkind Diagnostics",
+      "accreditation": "NABL Certified Bihar Hub",
+      "category": "Rapid Clinical Pathology Lab",
+      "description": "State-of-the-art diagnostic processing hub in Bihar delivering precise routine & specialized clinical reports.",
+      "turnaroundTime": "4 – 8 Hours",
+      "badge": "Fast Turnaround",
+      "isFeatured": true
+    },
+    {
+      "id": "lab-5",
+      "name": "Karim Path Lab In-House Center",
+      "accreditation": "NABL Calibrated Equipment",
+      "category": "Express Doorstep Diagnostic Lab",
+      "description": "Direct sterile doorstep sample collection with fast-track emergency testing and instant WhatsApp report delivery.",
+      "turnaroundTime": "4 – 6 Hours",
+      "badge": "Express 4 Hr Delivery",
+      "isFeatured": true
+    }
+  ]
+}

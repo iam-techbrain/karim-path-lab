@@ -42,3 +42,26 @@ export interface ReviewItem {
   date: string;
   verified?: boolean;
 }
+
+export interface ConnectedHospital {
+  id: string;
+  name: string;
+  location: string; // e.g., "Bailey Road, Patna" or "Kankarbagh, Patna"
+  type: string; // e.g., "Super Specialty", "Multi-Specialty", "Apex Institute"
+  specialities: string[]; // e.g., ["Cardiology", "Neurology", "Orthopedics"]
+  doctorNetworkCount?: number; // e.g., 25+ Specialists
+  badge?: string; // e.g., "NABH Accredited" or "Top Partner"
+  isFeatured?: boolean;
+}
+
+export interface PartnerLab {
+  id: string;
+  name: string;
+  accreditation: string; // e.g., "NABL & CAP Certified"
+  category: string; // e.g., "National Reference Lab", "Patna Super-Diagnostic"
+  description: string;
+  turnaroundTime: string; // e.g., "6 - 12 Hours"
+  badge?: string; // e.g., "Most Preferred"
+  isFeatured?: boolean;
+}
+

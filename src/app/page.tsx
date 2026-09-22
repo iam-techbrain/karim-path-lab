@@ -4,9 +4,9 @@ import React, { useState } from "react";
 import TopClinicalBar from "@/components/TopClinicalBar";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
-import MedicalNetworkBanner from "@/components/MedicalNetworkBanner";
 import PromoBanner from "@/components/PromoBanner";
 import LabTestsGrid from "@/components/LabTestsGrid";
+import PartnerNetworkSection from "@/components/PartnerNetworkSection";
 import HowItWorks from "@/components/HowItWorks";
 import WhatsAppFeatures from "@/components/WhatsAppFeatures";
 import PhlebotomistCard from "@/components/PhlebotomistCard";
@@ -40,9 +40,9 @@ export default function HomePage() {
       {/* Main Content Sections */}
       <main className="flex-1">
         <HeroSection onOpenBooking={() => handleOpenBooking()} />
-        <MedicalNetworkBanner />
         <PromoBanner onOpenBooking={() => handleOpenBooking()} />
         <LabTestsGrid onOpenBooking={handleOpenBooking} />
+        <PartnerNetworkSection onOpenBooking={handleOpenBooking} />
         <HowItWorks />
         <WhatsAppFeatures />
         <PhlebotomistCard />

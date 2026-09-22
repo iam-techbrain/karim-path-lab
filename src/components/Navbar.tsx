@@ -38,9 +38,13 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
         </a>
 
         {/* Nav Links */}
-        <nav className="hidden md:flex items-center gap-7 text-sm font-semibold text-slate-600">
+        <nav className="hidden md:flex items-center gap-6 text-sm font-semibold text-slate-600">
           <a href="#tests" className="hover:text-emerald-700 transition-colors">
             Lab Tests &amp; Packages
+          </a>
+          <a href="#network" className="hover:text-emerald-700 transition-colors flex items-center gap-1.5 text-emerald-700 font-bold">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>Hospitals &amp; Labs</span>
           </a>
           <a href="#how" className="hover:text-emerald-700 transition-colors">
             How it Works
