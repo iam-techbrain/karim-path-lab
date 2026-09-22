@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion } from "motion/react";
 import { CheckCircle2, Clock, BadgePercent, ArrowRight, MessageCircle, PlusCircle } from "lucide-react";
@@ -11,6 +11,16 @@ interface HeroSectionProps {
 }
 
 export default function HeroSection({ onOpenBooking }: HeroSectionProps) {
+  const [logoUrl, setLogoUrl] = useState<string>("/images/karim-logo.png");
+
+  useEffect(() => {
+    fetch("/api/admin/data")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.logoUrl) setLogoUrl(data.logoUrl);
+      })
+      .catch((err) => console.log("Hero logo sync notice:", err));
+  }, []);
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 md:pt-14 pb-12 md:pb-18">
       <div className="grid lg:grid-cols-12 gap-10 items-center">
@@ -148,11 +158,12 @@ export default function HeroSection({ onOpenBooking }: HeroSectionProps) {
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-full overflow-hidden border border-emerald-300 shadow-sm shrink-0">
                     <Image
-                      src="/images/karim-logo.png"
+                      src={logoUrl || "/images/karim-logo.png"}
                       alt="Karim Path Lab"
                       width={32}
                       height={32}
                       className="w-full h-full object-cover rounded-full"
+                      unoptimized
                     />
                   </div>
                   <div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { LAB_CONTACT } from "@/data/testsData";
 
@@ -9,6 +9,17 @@ interface FooterProps {
 }
 
 export default function Footer({ onOpenBooking }: FooterProps) {
+  const [currentLogo, setCurrentLogo] = useState<string>("/images/karim-logo.png");
+
+  useEffect(() => {
+    fetch("/api/admin/data")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.logoUrl) setCurrentLogo(data.logoUrl);
+      })
+      .catch((err) => console.log("Footer logo sync notice:", err));
+  }, []);
+
   return (
     <footer className="bg-white text-slate-500 text-xs border-t border-slate-200 mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -17,11 +28,12 @@ export default function Footer({ onOpenBooking }: FooterProps) {
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-full overflow-hidden border border-emerald-200 shadow-sm shrink-0">
                 <Image
-                  src="/images/karim-logo.png"
+                  src={currentLogo}
                   alt="Karim Path Lab Official Logo"
                   width={48}
                   height={48}
                   className="w-full h-full object-cover rounded-full"
+                  unoptimized
                 />
               </div>
               <div>

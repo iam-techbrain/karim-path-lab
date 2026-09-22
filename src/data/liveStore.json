@@ -1,5 +1,12 @@
 {
-  "updatedAt": "2026-09-22T15:12:00.000Z",
+  "updatedAt": "2026-09-22T11:57:59.574Z",
+  "logoUrl": "/images/karim-logo.png",
+  "globalOffer": {
+    "enabled": true,
+    "discountPercentage": 20,
+    "badgeText": "20% OFF",
+    "title": "FLAT 20% OFF ON ALL LAB PACKAGES"
+  },
   "services": [
     {
       "id": "cbc",
@@ -75,7 +82,7 @@
       "originalPrice": 2500,
       "discountPercentage": 20,
       "icon": "Award",
-      "badge": "★ MOST POPULAR PACKAGE",
+      "badge": "20% OFF",
       "featured": true
     }
   ],
@@ -85,7 +92,12 @@
       "name": "Paras HMRI Hospital",
       "location": "Raja Bazar, Bailey Road, Patna",
       "type": "Super Specialty Hospital",
-      "specialities": ["Cardiology", "Oncology", "Orthopedics", "Neuro Sciences"],
+      "specialities": [
+        "Cardiology",
+        "Oncology",
+        "Orthopedics",
+        "Neuro Sciences"
+      ],
       "doctorNetworkCount": 45,
       "badge": "NABH Accredited Partner",
       "isFeatured": true
@@ -95,7 +107,12 @@
       "name": "Ruban Memorial Hospital",
       "location": "Patliputra Colony, Patna",
       "type": "Multi-Specialty Hospital",
-      "specialities": ["Gastroenterology", "Nephrology", "Urology", "Internal Medicine"],
+      "specialities": [
+        "Gastroenterology",
+        "Nephrology",
+        "Urology",
+        "Internal Medicine"
+      ],
       "doctorNetworkCount": 30,
       "badge": "Leading Patna Multi-Specialty",
       "isFeatured": true
@@ -105,7 +122,12 @@
       "name": "Mediversal Multi-Specialty Hospital",
       "location": "Doctors Colony, Kankarbagh, Patna",
       "type": "Advanced Multi-Specialty",
-      "specialities": ["Critical Care", "Diabetology", "Pulmonology", "General Surgery"],
+      "specialities": [
+        "Critical Care",
+        "Diabetology",
+        "Pulmonology",
+        "General Surgery"
+      ],
       "doctorNetworkCount": 28,
       "badge": "Emergency & ICU Tie-up",
       "isFeatured": true
@@ -115,7 +137,12 @@
       "name": "Ford Hospital & Research Centre",
       "location": "New Bypass Road, Khemnichak, Patna",
       "type": "Multi-Specialty & Trauma Centre",
-      "specialities": ["Trauma Care", "Cardiology", "General Medicine", "Pediatrics"],
+      "specialities": [
+        "Trauma Care",
+        "Cardiology",
+        "General Medicine",
+        "Pediatrics"
+      ],
       "doctorNetworkCount": 22,
       "badge": "Specialist Network",
       "isFeatured": false
@@ -125,7 +152,12 @@
       "name": "AIIMS & PMCH Senior Specialists Network",
       "location": "Patna City & Phulwarisharif, Patna",
       "type": "Doctor Consultation & Clinical Tie-up",
-      "specialities": ["Advanced Pathology", "Endocrinology", "Rheumatology", "Hematology"],
+      "specialities": [
+        "Advanced Pathology",
+        "Endocrinology",
+        "Rheumatology",
+        "Hematology"
+      ],
       "doctorNetworkCount": 50,
       "badge": "Apex Doctor Tie-up",
       "isFeatured": true

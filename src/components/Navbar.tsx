@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { Phone, CalendarCheck } from "lucide-react";
 import { LAB_CONTACT } from "@/data/testsData";
@@ -10,6 +10,21 @@ interface NavbarProps {
 }
 
 export default function Navbar({ onOpenBooking }: NavbarProps) {
+  const [currentLogo, setCurrentLogo] = useState<string>("/images/karim-logo.png");
+  const [offerText, setOfferText] = useState<string>("20% OFF");
+
+  useEffect(() => {
+    fetch("/api/admin/data")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.logoUrl) setCurrentLogo(data.logoUrl);
+        if (data.globalOffer && data.globalOffer.enabled) {
+          setOfferText(data.globalOffer.badgeText || `${data.globalOffer.discountPercentage}% OFF`);
+        }
+      })
+      .catch((err) => console.log("Navbar sync notice:", err));
+  }, []);
+
   return (
     <header className="sticky top-0 z-40 glass-panel border-b border-slate-200/90 shadow-sm transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
@@ -18,12 +33,13 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
           <div className="relative w-11 h-11 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-400 p-0.5 shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform shrink-0">
             <div className="w-full h-full bg-white rounded-full flex items-center justify-center overflow-hidden">
               <Image
-                src="/images/karim-logo.png"
+                src={currentLogo}
                 alt="Karim Path Lab Official Logo"
                 width={44}
                 height={44}
                 className="w-full h-full object-cover rounded-full"
                 priority
+                unoptimized
               />
             </div>
           </div>
@@ -76,7 +92,7 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
             <CalendarCheck className="w-4 h-4" />
             <span>Book Visit</span>
             <span className="bg-white/20 text-[10px] px-1.5 py-0.5 rounded font-mono font-bold">
-              20% OFF
+              {offerText}
             </span>
           </button>
         </div>

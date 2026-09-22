@@ -49,6 +49,9 @@ export default function BookingModal({
     address: "",
   });
 
+  const [testList, setTestList] = useState(TEST_PACKAGES);
+  const [activeLogo, setActiveLogo] = useState<string>("/images/karim-logo.png");
+  const [activeOfferBadge, setActiveOfferBadge] = useState<string>("20% OFF");
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [cardImageSrc, setCardImageSrc] = useState<string>("");
   const [passData, setPassData] = useState<BookingPassData | null>(null);
@@ -56,13 +59,31 @@ export default function BookingModal({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submitError, setSubmitError] = useState<string>("");
 
+  // Sync live tests, offer, and logo from server
+  useEffect(() => {
+    fetch("/api/admin/data")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.services && data.services.length > 0) {
+          setTestList(data.services);
+        }
+        if (data.logoUrl) {
+          setActiveLogo(data.logoUrl);
+        }
+        if (data.globalOffer && data.globalOffer.enabled) {
+          setActiveOfferBadge(data.globalOffer.badgeText || `${data.globalOffer.discountPercentage}% OFF`);
+        }
+      })
+      .catch((err) => console.log("Booking modal data sync notice:", err));
+  }, []);
+
   // Lock body scroll when modal is open and synchronize defaults
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
       setFormData((prev) => ({
         ...prev,
-        testType: defaultTestName || prev.testType || TEST_PACKAGES[0]?.name || "Complete Blood Count (CBC)",
+        testType: defaultTestName || prev.testType || testList[0]?.name || TEST_PACKAGES[0]?.name || "Complete Blood Count (CBC)",
         prefDate: prev.prefDate || getTodayISO(),
         timeSlot: prev.timeSlot || "Morning (6:00 AM – 9:00 AM)",
       }));
@@ -171,7 +192,7 @@ export default function BookingModal({
 🔬 *Test Package:* ${pass.test}
 📅 *Preferred Date:* ${pass.date} (${pass.slot})
 📍 *Doorstep Address:* ${pass.address}
-💰 *Total Payable:* ₹${pass.price} (Saved ₹${pass.originalPrice - pass.price} · FLAT 20% OFF)
+💰 *Total Payable:* ₹${pass.price} (Saved ₹${pass.originalPrice - pass.price} · FLAT ${activeOfferBadge})
 
 _Hello Saba ji, please confirm my home blood test booking._`;
 
@@ -190,6 +211,9 @@ _Hello Saba ji, please confirm my home blood test booking._`;
     try {
       const refCode = `#KPL-${Math.floor(100000 + Math.random() * 900000)}`;
       const priceObj = getPriceForTest(formData.testType);
+      const matched = testList.find((t) => t.name.toLowerCase() === formData.testType.toLowerCase());
+      const finalPrice = matched ? matched.price : priceObj.price;
+      const finalOrigPrice = matched ? (matched.originalPrice || matched.price) : priceObj.original;
       const prettyDate = formatDate(formData.prefDate);
       const cleanedMobile = formData.mobile.replace(/\D/g, "").slice(-10);
 
@@ -202,8 +226,8 @@ _Hello Saba ji, please confirm my home blood test booking._`;
         date: prettyDate,
         slot: formData.timeSlot,
         address: formData.address.trim(),
-        price: priceObj.price,
-        originalPrice: priceObj.original,
+        price: finalPrice,
+        originalPrice: finalOrigPrice,
       };
 
       setPassData(bookingPass);
@@ -232,7 +256,7 @@ _Hello Saba ji, please confirm my home blood test booking._`;
         if (typeof window === "undefined") return resolve(null);
         try {
           const img = new Image();
-          img.src = "/images/karim-logo.png";
+          img.src = activeLogo || "/images/karim-logo.png";
           if (img.complete) return resolve(img);
           img.onload = () => resolve(img);
           img.onerror = () => resolve(null);
@@ -315,7 +339,7 @@ _Hello Saba ji, please confirm my home blood test booking._`;
                     {step === "form" ? "Book Home Visit & Generate Pass" : "Official Diagnostic Pass"}
                   </span>
                   <span className="bg-emerald-100 text-emerald-800 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border border-emerald-200">
-                    20% OFF
+                    {activeOfferBadge}
                   </span>
                 </h3>
                 <p className="text-[11px] text-slate-500 font-medium">
@@ -418,11 +442,15 @@ _Hello Saba ji, please confirm my home blood test booking._`;
                           errors.testType ? "border-rose-500" : "border-slate-200"
                         }`}
                       >
-                        {TEST_PACKAGES.map((t) => (
-                          <option key={t.id} value={t.name}>
-                            {t.name} — ₹{t.price} (20% OFF · Save ₹{t.originalPrice - t.price})
-                          </option>
-                        ))}
+                        {testList.map((t) => {
+                          const orig = t.originalPrice || 400;
+                          const saved = orig - t.price;
+                          return (
+                            <option key={t.id} value={t.name}>
+                              {t.name} — ₹{t.price} ({t.badge || activeOfferBadge} · Save ₹{saved})
+                            </option>
+                          );
+                        })}
                       </select>
                       <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
                         ▼

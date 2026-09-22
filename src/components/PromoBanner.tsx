@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Gift, ArrowRight } from "lucide-react";
 
 interface PromoBannerProps {
@@ -8,6 +8,27 @@ interface PromoBannerProps {
 }
 
 export default function PromoBanner({ onOpenBooking }: PromoBannerProps) {
+  const [offerData, setOfferData] = useState({
+    discountPercentage: 20,
+    title: "FLAT 20% OFF ON ALL LAB PACKAGES",
+    badgeText: "20% OFF",
+  });
+
+  useEffect(() => {
+    fetch("/api/admin/data")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.globalOffer && data.globalOffer.enabled) {
+          setOfferData({
+            discountPercentage: data.globalOffer.discountPercentage || 20,
+            title: data.globalOffer.title || `FLAT ${data.globalOffer.discountPercentage}% OFF ON ALL LAB PACKAGES`,
+            badgeText: data.globalOffer.badgeText || `${data.globalOffer.discountPercentage}% OFF`,
+          });
+        }
+      })
+      .catch((err) => console.log("Promo banner sync notice:", err));
+  }, []);
+
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
       <div className="relative rounded-3xl overflow-hidden shadow-sm bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-100 text-slate-900 p-6 sm:p-8 border border-emerald-200">
@@ -21,7 +42,7 @@ export default function PromoBanner({ onOpenBooking }: PromoBannerProps) {
                 <span>SPECIAL PATNA OFFER</span>
               </div>
               <h3 className="font-display font-extrabold text-xl sm:text-2xl text-slate-900">
-                FLAT 20% OFF ON ALL LAB PACKAGES
+                {offerData.title}
               </h3>
               <p className="text-slate-600 text-sm mt-0.5 font-medium">
                 Discount is calculated and displayed on your booking pass automatically.
@@ -33,7 +54,7 @@ export default function PromoBanner({ onOpenBooking }: PromoBannerProps) {
             onClick={onOpenBooking}
             className="btn-primary text-white font-display font-bold text-sm px-6 py-3.5 rounded-xl transition-all shadow-md shrink-0 flex items-center gap-2 cursor-pointer"
           >
-            <span>Book &amp; Claim 20% OFF</span>
+            <span>Book &amp; Claim {offerData.badgeText}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>

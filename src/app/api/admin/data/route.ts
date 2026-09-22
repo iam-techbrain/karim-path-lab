@@ -59,6 +59,13 @@ export async function GET() {
       services,
       hospitals,
       labs,
+      logoUrl: localStore.logoUrl || "/images/karim-logo.png",
+      globalOffer: localStore.globalOffer || {
+        enabled: true,
+        discountPercentage: 20,
+        badgeText: "20% OFF",
+        title: "FLAT 20% OFF ON ALL LAB PACKAGES",
+      },
       updatedAt: localStore.updatedAt || new Date().toISOString(),
     });
   } catch (error: any) {
@@ -73,27 +80,72 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { services, hospitals, labs, type, item } = body;
+    const { services, hospitals, labs, type, item, logoUrl, globalOffer, action, discountPercentage } = body;
 
     let localStore = readLocalStore();
+    localStore.updatedAt = new Date().toISOString();
 
-    if (services && hospitals && labs) {
-      // Bulk update
-      localStore = {
-        updatedAt: new Date().toISOString(),
-        services,
-        hospitals,
-        labs,
+    // 1. Logo Update
+    if (type === "logo" || logoUrl !== undefined) {
+      localStore.logoUrl = item?.logoUrl || logoUrl || "/images/karim-logo.png";
+    }
+
+    // 2. Global Offer Update & Price Recalculation
+    if (type === "offer" || globalOffer !== undefined || action === "apply_discount") {
+      const targetOffer = globalOffer || (item ? item : localStore.globalOffer) || {
+        enabled: true,
+        discountPercentage: 20,
+        badgeText: "20% OFF",
+        title: "FLAT 20% OFF ON ALL LAB PACKAGES",
       };
+
+      if (discountPercentage !== undefined) {
+        targetOffer.discountPercentage = Number(discountPercentage);
+        targetOffer.badgeText = `${discountPercentage}% OFF`;
+      }
+
+      localStore.globalOffer = targetOffer;
+
+      // Automatically recalculate test prices if offer is enabled and discount is active
+      const discPercent = targetOffer.enabled ? Number(targetOffer.discountPercentage || 20) : 0;
+      if (Array.isArray(localStore.services)) {
+        localStore.services = localStore.services.map((s: any) => {
+          const orig = Number(s.originalPrice) || Number(s.price) || 400;
+          const newPrice = discPercent > 0 ? Math.round(orig * (1 - discPercent / 100)) : orig;
+          return {
+            ...s,
+            originalPrice: orig,
+            price: newPrice,
+            discountPercentage: discPercent,
+            badge: discPercent > 0 ? `${discPercent}% OFF` : "Regular Price",
+          };
+        });
+      }
+    }
+
+    // 3. Bulk Services / Hospitals / Labs
+    if (services && hospitals && labs) {
+      localStore.services = services;
+      localStore.hospitals = hospitals;
+      localStore.labs = labs;
     } else if (type && item) {
-      // Granular update
-      localStore.updatedAt = new Date().toISOString();
       if (type === "service") {
+        const orig = Number(item.originalPrice) || Number(item.price) || 400;
+        const disc = Number(item.discountPercentage) ?? 20;
+        const calculatedPrice = disc > 0 ? Math.round(orig * (1 - disc / 100)) : orig;
+        const processedItem = {
+          ...item,
+          originalPrice: orig,
+          price: item.price !== undefined ? item.price : calculatedPrice,
+          discountPercentage: disc,
+          badge: item.badge || (disc > 0 ? `${disc}% OFF` : undefined),
+        };
+
         const index = localStore.services.findIndex((s: any) => s.id === item.id);
         if (index >= 0) {
-          localStore.services[index] = item;
+          localStore.services[index] = processedItem;
         } else {
-          localStore.services.unshift(item);
+          localStore.services.unshift(processedItem);
         }
       } else if (type === "hospital") {
         const index = localStore.hospitals.findIndex((h: any) => h.id === item.id);
@@ -125,7 +177,6 @@ export async function POST(request: Request) {
         await supabase.from("partner_labs").upsert([item]);
       }
     } catch (sbErr) {
-      // Non-blocking error if Supabase schema isn't setup
       console.log("Supabase upsert non-blocking notice:", sbErr);
     }
 
