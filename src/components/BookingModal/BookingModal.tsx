@@ -553,7 +553,7 @@ _Hello Saba ji, please confirm my home blood test booking._`;
                         ) : (
                           <Download className="w-4 h-4 shrink-0" />
                         )}
-                        <span>Generate &amp; Download Pass</span>
+                        <span>Book &amp; Get Digital Pass</span>
                       </button>
                     </div>
 
