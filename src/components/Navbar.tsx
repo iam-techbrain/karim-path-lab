@@ -15,14 +15,14 @@ export default function Navbar({ onOpenBooking }: NavbarProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
         {/* Brand Logo */}
         <a href="#" className="flex items-center gap-3 group">
-          <div className="relative w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-400 p-0.5 shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform">
-            <div className="w-full h-full bg-white rounded-[14px] flex items-center justify-center p-1.5 overflow-hidden">
+          <div className="relative w-11 h-11 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-400 p-0.5 shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform shrink-0">
+            <div className="w-full h-full bg-white rounded-full flex items-center justify-center overflow-hidden">
               <Image
-                src="/images/tanrica-medical-laboratory.svg"
-                alt="Karim Path Lab Logo"
-                width={36}
-                height={36}
-                className="w-full h-full object-contain"
+                src="/images/karim-logo.png"
+                alt="Karim Path Lab Official Logo"
+                width={44}
+                height={44}
+                className="w-full h-full object-cover rounded-full"
                 priority
               />
             </div>

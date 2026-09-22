@@ -44,6 +44,11 @@ export const metadata: Metadata = {
     "Thyroid Test Patna",
   ],
   authors: [{ name: "Karim Path Lab Diagnostic Pathology" }],
+  icons: {
+    icon: "/images/karim-logo.png",
+    shortcut: "/images/karim-logo.png",
+    apple: "/images/karim-logo.png",
+  },
   openGraph: {
     type: "website",
     url: "https://karimpathlab.com/",

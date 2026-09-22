@@ -62,7 +62,10 @@ function dashedLine(
   ctx.restore();
 }
 
-export function generateBookingCardCanvas(data: BookingPassData): HTMLCanvasElement {
+export function generateBookingCardCanvas(
+  data: BookingPassData,
+  logoImage?: HTMLImageElement | null
+): HTMLCanvasElement {
   const W = 800;
   const PAD = 44;
 
@@ -133,14 +136,28 @@ export function generateBookingCardCanvas(data: BookingPassData): HTMLCanvasElem
   ctx.stroke();
   ctx.restore();
 
+  // Official Logo Drawing in Header
+  let textX = PAD;
+  if (logoImage && logoImage.complete && logoImage.naturalWidth > 0) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(PAD + 28, 54, 28, 0, Math.PI * 2);
+    ctx.fillStyle = "#ffffff";
+    ctx.fill();
+    ctx.clip();
+    ctx.drawImage(logoImage, PAD, 26, 56, 56);
+    ctx.restore();
+    textX = PAD + 68;
+  }
+
   // Lab Title
   ctx.fillStyle = "#ffffff";
-  ctx.font = '700 28px "Space Grotesk", sans-serif';
-  ctx.fillText("KARIM PATH LAB", PAD, 52);
+  ctx.font = '700 27px "Space Grotesk", sans-serif';
+  ctx.fillText("KARIM PATH LAB", textX, 51);
 
-  ctx.font = '700 11px "JetBrains Mono", monospace';
+  ctx.font = '700 10.5px "JetBrains Mono", monospace';
   ctx.fillStyle = "#ecfdf5";
-  ctx.fillText("D O O R S T E P   B L O O D   &   U R I N E   T E S T I N G", PAD, 76);
+  ctx.fillText("D O O R S T E P   B L O O D   &   U R I N E   T E S T I N G", textX, 73);
 
   // 20% OFF Badge top right
   ctx.save();

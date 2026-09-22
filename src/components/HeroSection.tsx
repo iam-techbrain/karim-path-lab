@@ -21,11 +21,6 @@ export default function HeroSection({ onOpenBooking }: HeroSectionProps) {
           transition={{ duration: 0.5 }}
           className="lg:col-span-7 space-y-6"
         >
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold shadow-sm">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 live-dot"></span>
-            <span>Patna&apos;s Certified Doorstep Pathology &amp; Diagnostic Lab</span>
-          </div>
-
           <h2 className="font-display font-extrabold text-3xl sm:text-5xl lg:text-6xl text-slate-900 leading-[1.12] tracking-tight">
             NABL-Standard Testing,
             <br />
@@ -150,13 +145,24 @@ export default function HeroSection({ onOpenBooking }: HeroSectionProps) {
             {/* Sample Card Graphic */}
             <div className="bg-gradient-to-br from-emerald-50/90 via-white to-teal-50/90 rounded-2xl p-4 border border-emerald-200/90 space-y-3 shadow-sm">
               <div className="flex justify-between items-start">
-                <div>
-                  <p className="font-display font-extrabold text-sm text-emerald-950 tracking-tight">
-                    KARIM PATH LAB
-                  </p>
-                  <p className="text-[9px] font-mono text-emerald-700 font-bold tracking-wider">
-                    PATNA DIAGNOSTIC PASS
-                  </p>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full overflow-hidden border border-emerald-300 shadow-sm shrink-0">
+                    <Image
+                      src="/images/karim-logo.png"
+                      alt="Karim Path Lab"
+                      width={32}
+                      height={32}
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  </div>
+                  <div>
+                    <p className="font-display font-extrabold text-sm text-emerald-950 tracking-tight leading-none">
+                      KARIM PATH LAB
+                    </p>
+                    <p className="text-[9px] font-mono text-emerald-700 font-bold tracking-wider mt-0.5">
+                      PATNA DIAGNOSTIC PASS
+                    </p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="bg-emerald-100/80 text-emerald-800 text-[9px] font-mono font-bold px-2 py-0.5 rounded border border-emerald-200">

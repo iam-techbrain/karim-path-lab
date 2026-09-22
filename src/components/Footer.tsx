@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { LAB_CONTACT } from "@/data/testsData";
 
 interface FooterProps {
@@ -13,9 +14,25 @@ export default function Footer({ onOpenBooking }: FooterProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
           <div className="col-span-2 md:col-span-1 space-y-3">
-            <h5 className="font-display font-bold text-slate-900 text-base">
-              KARIM <span className="text-gradient">PATH LAB</span>
-            </h5>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full overflow-hidden border border-emerald-200 shadow-sm shrink-0">
+                <Image
+                  src="/images/karim-logo.png"
+                  alt="Karim Path Lab Official Logo"
+                  width={48}
+                  height={48}
+                  className="w-full h-full object-cover rounded-full"
+                />
+              </div>
+              <div>
+                <h5 className="font-display font-bold text-slate-900 text-base leading-tight">
+                  KARIM <span className="text-gradient">PATH LAB</span>
+                </h5>
+                <p className="text-[10px] font-mono text-emerald-700 font-bold uppercase">
+                  ESTD 2020 · Patna
+                </p>
+              </div>
+            </div>
             <p className="text-slate-500 text-xs leading-relaxed font-medium">
               Doorstep blood &amp; urine sample collection in Patna, Bihar. NABL accuracy standards.
             </p>

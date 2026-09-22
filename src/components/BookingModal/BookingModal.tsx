@@ -120,7 +120,7 @@ export default function BookingModal({
     return `${d} ${monthName} ${y}`;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
 
@@ -162,8 +162,22 @@ export default function BookingModal({
       console.warn("Could not save booking to Neon DB:", err);
     });
 
-    // Generate canvas card
-    const canvas = generateBookingCardCanvas(bookingPass);
+    // Preload official logo image for canvas rendering
+    let logoImg: HTMLImageElement | null = null;
+    if (typeof window !== "undefined") {
+      logoImg = new Image();
+      logoImg.src = "/images/karim-logo.png";
+      if (!logoImg.complete) {
+        await new Promise((resolve) => {
+          if (!logoImg) return resolve(null);
+          logoImg.onload = () => resolve(null);
+          logoImg.onerror = () => resolve(null);
+        });
+      }
+    }
+
+    // Generate canvas card with logo
+    const canvas = generateBookingCardCanvas(bookingPass, logoImg);
     setLastCanvas(canvas);
     const dataUrl = canvas.toDataURL("image/png");
     setCardImageSrc(dataUrl);
@@ -257,10 +271,9 @@ export default function BookingModal({
                           name="fullName"
                           value={formData.fullName}
                           onChange={handleChange}
-                          placeholder="e.g. Ritik Verma"
-                          className={`w-full bg-slate-50 border rounded-xl pl-10 pr-4 py-3 text-sm text-slate-900 font-medium placeholder-slate-400 ${
-                            errors.fullName ? "border-rose-500" : "border-slate-200"
-                          }`}
+                          placeholder="Enter Your Full Name"
+                          className={`w-full bg-slate-50 border rounded-xl pl-10 pr-4 py-3 text-sm text-slate-900 font-medium placeholder-slate-400 ${errors.fullName ? "border-rose-500" : "border-slate-200"
+                            }`}
                         />
                       </div>
                       {errors.fullName && (
@@ -286,10 +299,9 @@ export default function BookingModal({
                           maxLength={10}
                           value={formData.mobile}
                           onChange={handleChange}
-                          placeholder="98765 43210"
-                          className={`w-full bg-slate-50 border rounded-xl pl-12 pr-4 py-3 text-sm text-slate-900 font-medium placeholder-slate-400 ${
-                            errors.mobile ? "border-rose-500" : "border-slate-200"
-                          }`}
+                          placeholder="Enter Your Mobile Number"
+                          className={`w-full bg-slate-50 border rounded-xl pl-12 pr-4 py-3 text-sm text-slate-900 font-medium placeholder-slate-400 ${errors.mobile ? "border-rose-500" : "border-slate-200"
+                            }`}
                         />
                       </div>
                       {errors.mobile && (
@@ -311,9 +323,8 @@ export default function BookingModal({
                         name="testType"
                         value={formData.testType}
                         onChange={handleChange}
-                        className={`w-full bg-slate-50 border rounded-xl px-4 py-3 text-sm text-slate-900 font-medium appearance-none pr-10 ${
-                          errors.testType ? "border-rose-500" : "border-slate-200"
-                        }`}
+                        className={`w-full bg-slate-50 border rounded-xl px-4 py-3 text-sm text-slate-900 font-medium appearance-none pr-10 ${errors.testType ? "border-rose-500" : "border-slate-200"
+                          }`}
                       >
                         <option value="" disabled>
                           Choose a test package
@@ -350,9 +361,8 @@ export default function BookingModal({
                           min={todayStr}
                           value={formData.prefDate}
                           onChange={handleChange}
-                          className={`w-full bg-slate-50 border rounded-xl pl-10 pr-4 py-3 text-sm text-slate-900 font-medium ${
-                            errors.prefDate ? "border-rose-500" : "border-slate-200"
-                          }`}
+                          className={`w-full bg-slate-50 border rounded-xl pl-10 pr-4 py-3 text-sm text-slate-900 font-medium ${errors.prefDate ? "border-rose-500" : "border-slate-200"
+                            }`}
                         />
                       </div>
                       {errors.prefDate && (
@@ -374,9 +384,8 @@ export default function BookingModal({
                           name="timeSlot"
                           value={formData.timeSlot}
                           onChange={handleChange}
-                          className={`w-full bg-slate-50 border rounded-xl pl-10 pr-10 py-3 text-sm text-slate-900 font-medium appearance-none ${
-                            errors.timeSlot ? "border-rose-500" : "border-slate-200"
-                          }`}
+                          className={`w-full bg-slate-50 border rounded-xl pl-10 pr-10 py-3 text-sm text-slate-900 font-medium appearance-none ${errors.timeSlot ? "border-rose-500" : "border-slate-200"
+                            }`}
                         >
                           <option value="" disabled>
                             Select time slot
@@ -412,9 +421,8 @@ export default function BookingModal({
                         value={formData.address}
                         onChange={handleChange}
                         placeholder="House / Flat No., Street, Landmark, Area (e.g. Kankarbagh, Boring Road, Rajendra Nagar, etc.)"
-                        className={`w-full bg-slate-50 border rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 font-medium resize-none ${
-                          errors.address ? "border-rose-500" : "border-slate-200"
-                        }`}
+                        className={`w-full bg-slate-50 border rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 font-medium resize-none ${errors.address ? "border-rose-500" : "border-slate-200"
+                          }`}
                       />
                     </div>
                     {errors.address && (
