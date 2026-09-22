@@ -576,9 +576,6 @@ export default function AdminDashboardPage() {
 
           {/* Group 4: Ad & Diagnostic Suite */}
           <div className="space-y-0.5 pt-1 border-t border-slate-100">
-            <span className="px-2 py-0.5 rounded text-[11px] font-bold tracking-tight bg-slate-100 text-slate-700 inline-block mb-1">
-              Ad intelligence
-            </span>
             <button
               onClick={() => setActiveNav("offers")}
               className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer ${activeNav === "offers"
