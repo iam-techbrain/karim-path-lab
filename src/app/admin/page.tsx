@@ -52,9 +52,12 @@ import {
   BarChart3,
   Link2,
   FileCheck,
-  Database
+  Database,
+  Copy,
+  CalendarCheck
 } from "lucide-react";
 import { TestPackage, ConnectedHospital, PartnerLab } from "@/types/booking";
+import { SUPABASE_SQL_SCHEMA } from "@/lib/schemaSql";
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -62,7 +65,7 @@ export default function AdminDashboardPage() {
 
   // Active navigation tab
   const [activeNav, setActiveNav] = useState<
-    "home" | "services" | "offers" | "logo" | "hospitals" | "labs"
+    "home" | "services" | "offers" | "logo" | "hospitals" | "labs" | "bookings"
   >("home");
 
   const [loading, setLoading] = useState(true);
@@ -73,6 +76,13 @@ export default function AdminDashboardPage() {
   const [services, setServices] = useState<TestPackage[]>([]);
   const [hospitals, setHospitals] = useState<ConnectedHospital[]>([]);
   const [labs, setLabs] = useState<PartnerLab[]>([]);
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [dbInfo, setDbInfo] = useState<any>(null);
+  const [showSqlModal, setShowSqlModal] = useState(false);
+  const [copiedSql, setCopiedSql] = useState(false);
+  const [bookingSearch, setBookingSearch] = useState("");
+  const [bookingStatusFilter, setBookingStatusFilter] = useState("all");
+
   const [searchQuery, setSearchQuery] = useState("");
   const [logoUrl, setLogoUrl] = useState<string>("/images/karim-logo.png");
   const [newLogoInput, setNewLogoInput] = useState<string>("");
@@ -160,6 +170,8 @@ export default function AdminDashboardPage() {
       if (data.services) setServices(data.services);
       if (data.hospitals) setHospitals(data.hospitals);
       if (data.labs) setLabs(data.labs);
+      if (data.bookings) setBookings(data.bookings);
+      if (data.database) setDbInfo(data.database);
       if (data.logoUrl) {
         setLogoUrl(data.logoUrl);
         setNewLogoInput(data.logoUrl);
@@ -303,15 +315,55 @@ export default function AdminDashboardPage() {
       });
       const data = await res.json();
       if (data.success) {
-        showToast("success", "Supabase Database synchronized successfully! All tables up to date.");
+        showToast("success", data.message || "Supabase Database synchronized successfully! All tables up to date.");
       } else {
-        showToast("error", "Database Sync: " + (data.syncStatus?.errors?.join("; ") || "Schema ready in supabase_schema.sql"));
+        showToast("error", data.message || "Supabase tables need to be created in your Supabase SQL Editor.");
+        setShowSqlModal(true);
       }
       await fetchData();
     } catch (err: any) {
       showToast("error", "Failed to sync with Supabase: " + err.message);
     } finally {
       setSyncingDb(false);
+    }
+  };
+
+  const handleCopySql = () => {
+    navigator.clipboard.writeText(SUPABASE_SQL_SCHEMA);
+    setCopiedSql(true);
+    showToast("success", "Supabase SQL script copied to clipboard!");
+    setTimeout(() => setCopiedSql(false), 3000);
+  };
+
+  const handleUpdateBookingStatus = async (id: string, newStatus: string) => {
+    try {
+      const res = await fetch("/api/admin/data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "booking",
+          item: { id, status: newStatus },
+        }),
+      });
+      if (!res.ok) throw new Error("Could not update status");
+      await fetchData();
+      showToast("success", `Booking status updated to "${newStatus}"`);
+    } catch (err: any) {
+      showToast("error", err.message || "Failed to update status");
+    }
+  };
+
+  const handleDeleteBooking = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this booking record?")) return;
+    try {
+      const res = await fetch(`/api/admin/data?type=booking&id=${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Delete failed");
+      await fetchData();
+      showToast("success", "Booking record deleted from database");
+    } catch (err: any) {
+      showToast("error", err.message || "Delete failed");
     }
   };
 
@@ -513,6 +565,22 @@ export default function AdminDashboardPage() {
     l.accreditation.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const filteredBookings = bookings.filter((b) => {
+    const q = (bookingSearch || searchQuery).toLowerCase();
+    const matchesSearch =
+      !q ||
+      b.fullName?.toLowerCase().includes(q) ||
+      b.mobile?.toLowerCase().includes(q) ||
+      b.testType?.toLowerCase().includes(q) ||
+      b.refCode?.toLowerCase().includes(q) ||
+      b.address?.toLowerCase().includes(q);
+
+    const matchesStatus =
+      bookingStatusFilter === "all" || b.status?.toLowerCase() === bookingStatusFilter.toLowerCase();
+
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div className="min-h-screen bg-[#F4F7FB] text-slate-800 flex font-sans antialiased">
       {/* Toast Alert */}
@@ -664,6 +732,22 @@ export default function AdminDashboardPage() {
                 NABL
               </span>
             </button>
+
+            <button
+              onClick={() => setActiveNav("bookings")}
+              className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer ${activeNav === "bookings"
+                ? "bg-blue-50 text-blue-700 font-semibold"
+                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <FileCheck className="w-4 h-4 text-emerald-600" />
+                <span>Patient Bookings</span>
+              </div>
+              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-full">
+                {bookings.length}
+              </span>
+            </button>
           </div>
         </div>
 
@@ -772,91 +856,61 @@ export default function AdminDashboardPage() {
           {/* ======================================================== */}
           {activeNav === "home" && (
             <div className="space-y-6">
-              {/* Section 2: Recent activity (Exact match to screenshot) */}
-              <div className="space-y-3">
-                <h3 className="text-sm font-bold text-slate-900">Recent activity</h3>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {/* Activity Card 1 */}
-                  <div
-                    onClick={() => setActiveNav("services")}
-                    className="bg-white border border-slate-200/90 rounded-xl p-3.5 flex items-center gap-3.5 hover:border-blue-300 hover:shadow-xs transition-all cursor-pointer group"
-                  >
-                    <div className="w-9 h-9 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center shrink-0 text-slate-400 group-hover:text-blue-600 transition-colors">
-                      <FileText className="w-4 h-4" />
+              {/* Supabase Cloud & Vercel Deployment Architecture Banner */}
+              <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white rounded-2xl p-5 sm:p-6 shadow-md border border-slate-700">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        {dbInfo?.supabaseTablesReady ? "Supabase Cloud Active" : "Supabase Connected · Ready for Tables"}
+                      </span>
+                      <span className="text-xs text-blue-300 font-semibold bg-blue-500/20 px-2 py-0.5 rounded-full border border-blue-500/30">
+                        Vercel Deployment Architecture
+                      </span>
                     </div>
-                    <div className="min-w-0">
-                      <h4 className="text-xs font-bold text-slate-900 truncate">
-                        Website performance
-                      </h4>
-                      <p className="text-[11px] text-slate-500 truncate mt-0.5">
-                        ikararestaurant.com
-                      </p>
-                    </div>
+
+                    <h3 className="text-base font-extrabold text-white flex flex-wrap items-center gap-2 pt-1">
+                      <span>Cloud Database Storage (Vercel Ready)</span>
+                      <span className="text-[11px] font-mono text-slate-300 bg-slate-800/90 px-2 py-0.5 rounded border border-slate-700">
+                        {dbInfo?.supabaseUrl || "https://sfqzkvodulafamrhaxtg.supabase.co"}
+                      </span>
+                    </h3>
+
+                    <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+                      Active Source: <strong className="text-emerald-300">{dbInfo?.activeSource || "Database Active"}</strong>. Every test, price change, hospital, partner lab, brand logo, and patient booking is stored directly in database tables.
+                    </p>
                   </div>
 
-                  {/* Activity Card 2 */}
-                  <div
-                    onClick={() => setActiveNav("offers")}
-                    className="bg-white border border-slate-200/90 rounded-xl p-3.5 flex items-center gap-3.5 hover:border-blue-300 hover:shadow-xs transition-all cursor-pointer group"
-                  >
-                    <div className="w-9 h-9 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center shrink-0 text-slate-400 group-hover:text-blue-600 transition-colors">
-                      <FileText className="w-4 h-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <h4 className="text-xs font-bold text-slate-900 truncate">
-                        Website performance
-                      </h4>
-                      <p className="text-[11px] text-slate-500 truncate mt-0.5">
-                        bigrahpurmdevelopers.com
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                  <div className="flex flex-wrap items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => setShowSqlModal(true)}
+                      className="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Setup Supabase SQL</span>
+                    </button>
 
-              {/* Section 3: Your projects (Exact match to screenshot) */}
-              <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold text-slate-900">Your projects</h3>
-                    <span className="text-xs text-slate-400 font-medium">View all projects (0/1)</span>
-                  </div>
-                  <button
-                    onClick={() => openAddModal("service")}
-                    className="w-6 h-6 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-xs cursor-pointer"
-                    title="Add Test / Service"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                    <button
+                      onClick={handleSyncToDatabase}
+                      disabled={syncingDb}
+                      className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
+                      title="Sync all tables to Supabase"
+                    >
+                      <Database className={`w-3.5 h-3.5 ${syncingDb ? "animate-spin" : ""}`} />
+                      <span>{syncingDb ? "Syncing..." : "Sync to Supabase"}</span>
+                    </button>
 
-                <div className="border border-slate-200/90 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-blue-50/70 border border-blue-200/60 flex items-center justify-center shrink-0 text-blue-600">
-                      <Folder className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-blue-600 hover:underline cursor-pointer">
-                        mycompany.com
-                      </h4>
-                      <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-0.5">
-                        <span>3 competitors</span>
-                        <div className="flex items-center gap-1.5 text-slate-400">
-                          <Users className="w-3 h-3" />
-                          <Globe className="w-3 h-3" />
-                          <Mail className="w-3 h-3" />
-                          <Sliders className="w-3 h-3" />
-                        </div>
-                      </div>
-                    </div>
+                    <a
+                      href="https://supabase.com/dashboard/project/sfqzkvodulafamrhaxtg/sql/new"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5"
+                    >
+                      <span>SQL Editor</span>
+                      <ExternalLink className="w-3 h-3 text-slate-400" />
+                    </a>
                   </div>
-
-                  <button
-                    onClick={() => setActiveNav("offers")}
-                    className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-1.5 rounded-full transition-all shadow-xs cursor-pointer self-start sm:self-auto"
-                  >
-                    Create project
-                  </button>
                 </div>
               </div>
 
@@ -877,7 +931,7 @@ export default function AdminDashboardPage() {
                         </span>
                       </div>
                       <p className="text-xs text-slate-500 mt-0.5">
-                        {services.length} tests · {hospitals.length} hospitals · {labs.length} partner labs · Patna 803201
+                        {services.length} tests · {hospitals.length} hospitals · {labs.length} partner labs · {bookings.length} bookings
                       </p>
                     </div>
                   </div>
@@ -912,56 +966,68 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
 
-              {/* Statistics Overview Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              {/* Statistics Overview Cards (5 Columns with Bookings) */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4">
                 <div
                   onClick={() => setActiveNav("services")}
-                  className="bg-white border border-slate-200 rounded-xl p-5 hover:border-blue-400 hover:shadow-xs transition-all cursor-pointer"
+                  className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 hover:border-blue-400 hover:shadow-xs transition-all cursor-pointer"
                 >
                   <div className="flex items-center justify-between text-slate-500">
-                    <span className="text-xs font-bold uppercase tracking-wider">Live Tests</span>
+                    <span className="text-[11px] font-bold uppercase tracking-wider">Live Tests</span>
                     <Activity className="w-4 h-4 text-blue-600" />
                   </div>
-                  <p className="text-2xl font-extrabold text-slate-900 mt-2">{services.length}</p>
-                  <p className="text-[11px] text-blue-600 font-semibold mt-1">Available for Home Visit</p>
+                  <p className="text-xl sm:text-2xl font-extrabold text-slate-900 mt-2">{services.length}</p>
+                  <p className="text-[10px] text-blue-600 font-semibold mt-1">Doorstep Visit</p>
                 </div>
 
                 <div
                   onClick={() => setActiveNav("offers")}
-                  className="bg-white border border-slate-200 rounded-xl p-5 hover:border-amber-400 hover:shadow-xs transition-all cursor-pointer"
+                  className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 hover:border-amber-400 hover:shadow-xs transition-all cursor-pointer"
                 >
                   <div className="flex items-center justify-between text-slate-500">
-                    <span className="text-xs font-bold uppercase tracking-wider">Active Offer</span>
+                    <span className="text-[11px] font-bold uppercase tracking-wider">Active Offer</span>
                     <Percent className="w-4 h-4 text-amber-500" />
                   </div>
-                  <p className="text-2xl font-extrabold text-amber-600 mt-2">
-                    {globalOffer.enabled ? `${globalOffer.discountPercentage}% OFF` : "Disabled"}
+                  <p className="text-xl sm:text-2xl font-extrabold text-amber-600 mt-2">
+                    {globalOffer.enabled ? `${globalOffer.discountPercentage}% OFF` : "Off"}
                   </p>
-                  <p className="text-[11px] text-slate-500 font-medium mt-1">Amounts automatically reduced</p>
+                  <p className="text-[10px] text-slate-500 font-medium mt-1">Reduced Pricing</p>
                 </div>
 
                 <div
                   onClick={() => setActiveNav("hospitals")}
-                  className="bg-white border border-slate-200 rounded-xl p-5 hover:border-teal-400 hover:shadow-xs transition-all cursor-pointer"
+                  className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 hover:border-teal-400 hover:shadow-xs transition-all cursor-pointer"
                 >
                   <div className="flex items-center justify-between text-slate-500">
-                    <span className="text-xs font-bold uppercase tracking-wider">Hospitals</span>
+                    <span className="text-[11px] font-bold uppercase tracking-wider">Hospitals</span>
                     <Building2 className="w-4 h-4 text-teal-600" />
                   </div>
-                  <p className="text-2xl font-extrabold text-slate-900 mt-2">{hospitals.length}</p>
-                  <p className="text-[11px] text-teal-600 font-semibold mt-1">Connected Doctor Network</p>
+                  <p className="text-xl sm:text-2xl font-extrabold text-slate-900 mt-2">{hospitals.length}</p>
+                  <p className="text-[10px] text-teal-600 font-semibold mt-1">Doctor Network</p>
                 </div>
 
                 <div
                   onClick={() => setActiveNav("labs")}
-                  className="bg-white border border-slate-200 rounded-xl p-5 hover:border-purple-400 hover:shadow-xs transition-all cursor-pointer"
+                  className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 hover:border-purple-400 hover:shadow-xs transition-all cursor-pointer"
                 >
                   <div className="flex items-center justify-between text-slate-500">
-                    <span className="text-xs font-bold uppercase tracking-wider">Partner Labs</span>
+                    <span className="text-[11px] font-bold uppercase tracking-wider">Partner Labs</span>
                     <FlaskConical className="w-4 h-4 text-purple-600" />
                   </div>
-                  <p className="text-2xl font-extrabold text-slate-900 mt-2">{labs.length}</p>
-                  <p className="text-[11px] text-purple-600 font-semibold mt-1">NABL Super Labs</p>
+                  <p className="text-xl sm:text-2xl font-extrabold text-slate-900 mt-2">{labs.length}</p>
+                  <p className="text-[10px] text-purple-600 font-semibold mt-1">NABL Super Labs</p>
+                </div>
+
+                <div
+                  onClick={() => setActiveNav("bookings")}
+                  className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 hover:border-emerald-400 hover:shadow-xs transition-all cursor-pointer col-span-2 sm:col-span-1"
+                >
+                  <div className="flex items-center justify-between text-slate-500">
+                    <span className="text-[11px] font-bold uppercase tracking-wider">Bookings</span>
+                    <FileCheck className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <p className="text-xl sm:text-2xl font-extrabold text-emerald-700 mt-2">{bookings.length}</p>
+                  <p className="text-[10px] text-emerald-600 font-semibold mt-1">Patient Leads</p>
                 </div>
               </div>
 
@@ -1478,6 +1544,165 @@ export default function AdminDashboardPage() {
               </div>
             </div>
           )}
+
+          {/* ======================================================== */}
+          {/* TAB 7: PATIENT BOOKINGS & LEADS (STORED IN DATABASE) */}
+          {/* ======================================================== */}
+          {activeNav === "bookings" && (
+            <div className="space-y-6">
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-lg font-extrabold text-slate-900">
+                        Patient Bookings &amp; Sample Collection Leads
+                      </h2>
+                      <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-0.5 rounded-full">
+                        {bookings.length} Total
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Directly stored in database tables (Supabase Cloud + SQLite Native fallback)
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={fetchData}
+                      className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      <span>Refresh</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Filter and Search Bar */}
+                <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                    {["all", "Confirmed", "Sample Collected", "Report Dispatched", "Completed", "Cancelled"].map((status) => (
+                      <button
+                        key={status}
+                        onClick={() => setBookingStatusFilter(status)}
+                        className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
+                          bookingStatusFilter === status
+                            ? "bg-blue-600 text-white shadow-xs"
+                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        }`}
+                      >
+                        {status === "all" ? "All Bookings" : status}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="relative w-full sm:w-64">
+                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      type="text"
+                      value={bookingSearch}
+                      onChange={(e) => setBookingSearch(e.target.value)}
+                      placeholder="Search patient, phone, test..."
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Bookings List / Table */}
+                <div className="mt-6 space-y-3">
+                  {filteredBookings.length === 0 ? (
+                    <div className="text-center py-12 border border-dashed border-slate-200 rounded-2xl">
+                      <FileCheck className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                      <p className="text-sm font-bold text-slate-700">No bookings found</p>
+                      <p className="text-xs text-slate-400 mt-0.5">Incoming patient bookings will show up here automatically</p>
+                    </div>
+                  ) : (
+                    filteredBookings.map((b) => (
+                      <div
+                        key={b.id}
+                        className="border border-slate-200 rounded-xl p-4 bg-white hover:border-blue-300 transition-all shadow-2xs flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                              {b.refCode}
+                            </span>
+                            <h4 className="font-extrabold text-sm text-slate-900">{b.fullName}</h4>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              b.status === "Confirmed" ? "bg-emerald-100 text-emerald-800" :
+                              b.status === "Sample Collected" ? "bg-blue-100 text-blue-800" :
+                              b.status === "Report Dispatched" ? "bg-purple-100 text-purple-800" :
+                              b.status === "Completed" ? "bg-teal-100 text-teal-800" :
+                              "bg-rose-100 text-rose-800"
+                            }`}>
+                              {b.status}
+                            </span>
+                          </div>
+
+                          <div className="text-xs text-slate-600 flex flex-wrap items-center gap-x-4 gap-y-1 pt-1">
+                            <span className="font-semibold text-slate-800">🔬 {b.testType}</span>
+                            <span>📅 {b.prefDate} ({b.timeSlot})</span>
+                            <span>📍 {b.address}</span>
+                          </div>
+
+                          <div className="text-xs text-slate-500 pt-0.5">
+                            <span>Phone: <strong className="text-slate-800 font-mono">{b.mobile}</strong></span>
+                            <span className="ml-3">Booked at: {b.createdAt ? new Date(b.createdAt).toLocaleString("en-IN") : "Recent"}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-3 shrink-0 lg:text-right">
+                          <div className="mr-2">
+                            <span className="text-xs text-slate-400 line-through mr-1.5">₹{b.originalPrice}</span>
+                            <span className="text-base font-extrabold text-emerald-700 font-mono">₹{b.price}</span>
+                          </div>
+
+                          <a
+                            href={`https://wa.me/91${b.mobile.replace(/\D/g, "").slice(-10)}?text=${encodeURIComponent(`Hello ${b.fullName}, Karim Path Lab Patna confirming your test booking ${b.refCode} for ${b.testType}.`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-bold transition-all flex items-center gap-1"
+                            title="Message on WhatsApp"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5" />
+                            <span>WhatsApp</span>
+                          </a>
+
+                          <a
+                            href={`tel:${b.mobile}`}
+                            className="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold transition-all flex items-center gap-1"
+                            title="Call Patient"
+                          >
+                            <Phone className="w-3.5 h-3.5" />
+                            <span>Call</span>
+                          </a>
+
+                          <select
+                            value={b.status}
+                            onChange={(e) => handleUpdateBookingStatus(b.id, e.target.value)}
+                            className="bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold px-2.5 py-1.5 text-slate-800 focus:outline-none focus:border-blue-500 cursor-pointer"
+                          >
+                            <option value="Confirmed">Confirmed</option>
+                            <option value="Sample Collected">Sample Collected</option>
+                            <option value="Report Dispatched">Report Dispatched</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Cancelled">Cancelled</option>
+                          </select>
+
+                          <button
+                            onClick={() => handleDeleteBooking(b.id)}
+                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                            title="Delete booking from database"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </main>
 
@@ -1759,6 +1984,77 @@ export default function AdminDashboardPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Supabase SQL Setup Modal for Vercel */}
+      {showSqlModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-2xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-900 text-white">
+              <div className="flex items-center gap-2">
+                <Database className="w-5 h-5 text-blue-400" />
+                <h3 className="font-extrabold text-base">Setup Supabase Database (Vercel Ready)</h3>
+              </div>
+              <button
+                onClick={() => setShowSqlModal(false)}
+                className="w-7 h-7 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center hover:bg-slate-700 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl space-y-2 text-xs text-blue-900">
+                <p className="font-bold text-sm">Follow these 3 quick steps to activate Supabase Cloud for Vercel:</p>
+                <ol className="list-decimal pl-4 space-y-1 leading-relaxed">
+                  <li>Click <strong>&quot;Open Supabase SQL Editor&quot;</strong> below to open your project dashboard.</li>
+                  <li>Click <strong>&quot;Copy SQL Script&quot;</strong> to copy the ready-to-run schema script.</li>
+                  <li>Paste into Supabase SQL Editor, click <strong>&quot;RUN&quot;</strong>, and then click <strong>&quot;Sync Database Now&quot;</strong> here.</li>
+                </ol>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Complete SQL Migration Script (5 Tables + RLS Policies)
+                </span>
+                <button
+                  onClick={handleCopySql}
+                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  {copiedSql ? <Check className="w-3.5 h-3.5 text-white" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedSql ? "Copied!" : "Copy SQL Script"}</span>
+                </button>
+              </div>
+
+              <pre className="bg-slate-900 text-slate-200 p-4 rounded-xl text-[11px] font-mono overflow-x-auto max-h-56 leading-relaxed border border-slate-800">
+                {SUPABASE_SQL_SCHEMA}
+              </pre>
+
+              <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-slate-100">
+                <a
+                  href="https://supabase.com/dashboard/project/sfqzkvodulafamrhaxtg/sql/new"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center justify-center gap-2"
+                >
+                  <span>Open Supabase SQL Editor</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+
+                <button
+                  onClick={() => {
+                    setShowSqlModal(false);
+                    handleSyncToDatabase();
+                  }}
+                  className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <span>I have run the SQL, Sync Database Now</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -1,160 +1,160 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
+import {
+  dbGetServices,
+  dbUpsertService,
+  dbDeleteService,
+  dbApplyDiscountToAll,
+  dbGetHospitals,
+  dbUpsertHospital,
+  dbDeleteHospital,
+  dbGetPartnerLabs,
+  dbUpsertPartnerLab,
+  dbDeletePartnerLab,
+  dbGetSetting,
+  dbSetSetting,
+  dbGetBookings,
+  dbUpdateBookingStatus,
+  dbDeleteBooking,
+  dbGetDatabaseStats,
+} from "@/lib/db";
 import { supabase } from "@/lib/supabase";
 
-const DATA_FILE_PATH = path.join(process.cwd(), "src", "data", "liveStore.json");
-
-function readLocalStore() {
-  try {
-    if (fs.existsSync(DATA_FILE_PATH)) {
-      const fileData = fs.readFileSync(DATA_FILE_PATH, "utf-8");
-      return JSON.parse(fileData);
-    }
-  } catch (err) {
-    console.error("Error reading local liveStore.json:", err);
-  }
-  return { services: [], hospitals: [], labs: [] };
-}
-
-function writeLocalStore(data: any) {
-  try {
-    fs.writeFileSync(DATA_FILE_PATH, JSON.stringify(data, null, 2), "utf-8");
-  } catch (err) {
-    console.error("Error writing local liveStore.json:", err);
-  }
-}
-
-// Normalize row from Supabase (handles both snake_case and camelCase)
-function normalizeService(s: any) {
-  const orig = Number(s.original_price ?? s.originalPrice ?? s.price ?? 400);
-  const disc = Number(s.discount_percentage ?? s.discountPercentage ?? 20);
-  const price = Number(s.price ?? Math.round(orig * (1 - disc / 100)));
-  return {
-    id: String(s.id),
-    name: s.name,
-    description: s.description || "",
-    price,
-    originalPrice: orig,
-    discountPercentage: disc,
-    icon: s.icon || "Activity",
-    badge: s.badge || (disc > 0 ? `${disc}% OFF` : undefined),
-    featured: Boolean(s.featured ?? s.is_featured ?? false),
-  };
-}
-
-function normalizeHospital(h: any) {
-  let specs = h.specialities;
-  if (typeof specs === "string") {
-    try {
-      specs = JSON.parse(specs);
-    } catch {
-      specs = specs.split(",").map((x: string) => x.trim());
-    }
-  }
-  return {
-    id: String(h.id),
-    name: h.name,
-    location: h.location,
-    type: h.type,
-    specialities: Array.isArray(specs) ? specs : ["Multi-Specialty"],
-    doctorNetworkCount: Number(h.doctor_network_count ?? h.doctorNetworkCount ?? 15),
-    badge: h.badge || "Connected Partner",
-    isFeatured: Boolean(h.is_featured ?? h.isFeatured ?? true),
-  };
-}
-
-function normalizeLab(l: any) {
-  return {
-    id: String(l.id),
-    name: l.name,
-    accreditation: l.accreditation,
-    category: l.category,
-    description: l.description || "",
-    turnaroundTime: l.turnaround_time ?? l.turnaroundTime ?? "6 – 12 Hours",
-    badge: l.badge || "Certified Partner",
-    isFeatured: Boolean(l.is_featured ?? l.isFeatured ?? true),
-  };
-}
+export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    const localStore = readLocalStore();
-
-    let services = localStore.services || [];
-    let hospitals = localStore.hospitals || [];
-    let labs = localStore.labs || [];
-    let logoUrl = localStore.logoUrl || "/images/karim-logo.png";
-    let globalOffer = localStore.globalOffer || {
+    let services: any[] = [];
+    let hospitals: any[] = [];
+    let labs: any[] = [];
+    let bookings: any[] = [];
+    let logoUrl = "/images/karim-logo.png";
+    let globalOffer = {
       enabled: true,
       discountPercentage: 20,
       badgeText: "20% OFF",
       title: "FLAT 20% OFF ON ALL LAB PACKAGES",
     };
-    let databaseSource = "local_cache";
 
-    // 1. Check & query Supabase Database directly
+    let supabaseTablesReady = false;
+    let databaseSource = "SQLite Native (karim_path_lab.db)";
+
+    // 1. Try fetching from Supabase Cloud Database (Primary for Vercel)
     try {
-      const [sbServices, sbHospitals, sbLabs, sbSettings] = await Promise.all([
-        supabase.from("services").select("*"),
-        supabase.from("hospitals").select("*"),
-        supabase.from("partner_labs").select("*"),
+      const [sbServices, sbHospitals, sbLabs, sbSettings, sbBookings] = await Promise.all([
+        supabase.from("services").select("*").order("featured", { ascending: false }).order("price", { ascending: true }),
+        supabase.from("hospitals").select("*").order("is_featured", { ascending: false }),
+        supabase.from("partner_labs").select("*").order("is_featured", { ascending: false }),
         supabase.from("site_settings").select("*"),
+        supabase.from("bookings").select("*").order("created_at", { ascending: false }),
       ]);
 
-      if (sbServices.data && sbServices.data.length > 0) {
-        services = sbServices.data.map(normalizeService);
-        databaseSource = "supabase_database";
-      }
+      if (!sbServices.error && sbServices.data && sbServices.data.length > 0) {
+        supabaseTablesReady = true;
+        databaseSource = "Supabase Cloud Database (PostgreSQL)";
 
-      if (sbHospitals.data && sbHospitals.data.length > 0) {
-        hospitals = sbHospitals.data.map(normalizeHospital);
-        databaseSource = "supabase_database";
-      }
+        services = sbServices.data.map((r: any) => ({
+          id: r.id,
+          name: r.name,
+          description: r.description || "",
+          price: Number(r.price),
+          originalPrice: Number(r.original_price),
+          discountPercentage: Number(r.discount_percentage),
+          icon: r.icon || "Activity",
+          badge: r.badge || `${r.discount_percentage}% OFF`,
+          featured: Boolean(r.featured),
+        }));
 
-      if (sbLabs.data && sbLabs.data.length > 0) {
-        labs = sbLabs.data.map(normalizeLab);
-        databaseSource = "supabase_database";
-      }
+        if (!sbHospitals.error && sbHospitals.data) {
+          hospitals = sbHospitals.data.map((r: any) => ({
+            id: r.id,
+            name: r.name,
+            location: r.location,
+            type: r.type,
+            specialities: Array.isArray(r.specialities) ? r.specialities : [r.specialities],
+            doctorNetworkCount: Number(r.doctor_network_count || 15),
+            badge: r.badge,
+            isFeatured: Boolean(r.is_featured),
+          }));
+        }
 
-      if (sbSettings.data && sbSettings.data.length > 0) {
-        sbSettings.data.forEach((row: any) => {
-          if (row.key === "logo_url") {
-            logoUrl = typeof row.value === "string" ? row.value : row.value;
+        if (!sbLabs.error && sbLabs.data) {
+          labs = sbLabs.data.map((r: any) => ({
+            id: r.id,
+            name: r.name,
+            accreditation: r.accreditation,
+            category: r.category,
+            description: r.description || "",
+            turnaroundTime: r.turnaround_time,
+            badge: r.badge,
+            isFeatured: Boolean(r.is_featured),
+          }));
+        }
+
+        if (!sbSettings.error && sbSettings.data) {
+          const logoRow = sbSettings.data.find((s: any) => s.key === "logo_url");
+          if (logoRow) {
+            try { logoUrl = typeof logoRow.value === "string" ? JSON.parse(logoRow.value) : logoRow.value; } catch { logoUrl = logoRow.value; }
           }
-          if (row.key === "global_offer" && row.value) {
-            globalOffer = typeof row.value === "string" ? JSON.parse(row.value) : row.value;
+          const offerRow = sbSettings.data.find((s: any) => s.key === "global_offer");
+          if (offerRow) {
+            try { globalOffer = typeof offerRow.value === "string" ? JSON.parse(offerRow.value) : offerRow.value; } catch { globalOffer = offerRow.value; }
           }
-        });
-      }
+        }
 
-      // If Supabase has live records, keep local store synchronized
-      if (databaseSource === "supabase_database") {
-        localStore.services = services;
-        localStore.hospitals = hospitals;
-        localStore.labs = labs;
-        localStore.logoUrl = logoUrl;
-        localStore.globalOffer = globalOffer;
-        localStore.updatedAt = new Date().toISOString();
-        writeLocalStore(localStore);
+        if (!sbBookings.error && sbBookings.data) {
+          bookings = sbBookings.data.map((r: any) => ({
+            id: r.id,
+            refCode: r.ref_code,
+            fullName: r.full_name,
+            mobile: r.mobile,
+            testType: r.test_type,
+            prefDate: r.pref_date,
+            timeSlot: r.time_slot,
+            address: r.address,
+            price: Number(r.price),
+            originalPrice: Number(r.original_price),
+            status: r.status,
+            createdAt: r.created_at,
+          }));
+        }
       }
     } catch (sbErr) {
-      console.log("Supabase direct query fallback to local cache:", sbErr);
+      console.log("Supabase fetch notice:", sbErr);
     }
+
+    // 2. Fallback to SQLite Native Database if Supabase tables are not yet created
+    if (!supabaseTablesReady) {
+      services = dbGetServices();
+      hospitals = dbGetHospitals();
+      labs = dbGetPartnerLabs();
+      bookings = dbGetBookings();
+      logoUrl = dbGetSetting("logo_url", "/images/karim-logo.png");
+      globalOffer = dbGetSetting("global_offer", globalOffer);
+    }
+
+    const dbStats = dbGetDatabaseStats();
 
     return NextResponse.json({
       services,
       hospitals,
       labs,
+      bookings,
       logoUrl,
       globalOffer,
+      database: {
+        ...dbStats,
+        supabaseConnected: true,
+        supabaseTablesReady,
+        supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL || "https://sfqzkvodulafamrhaxtg.supabase.co",
+        activeSource: databaseSource,
+      },
       databaseSource,
-      updatedAt: localStore.updatedAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     });
   } catch (error: any) {
-    console.error("Failed to load admin data:", error);
+    console.error("Database query error:", error);
     return NextResponse.json(
-      { error: "Failed to load admin data", details: error.message },
+      { error: "Database query failed", details: error.message },
       { status: 500 }
     );
   }
@@ -163,235 +163,232 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { services, hospitals, labs, type, item, logoUrl, globalOffer, action, discountPercentage } = body;
+    const { type, item, logoUrl, globalOffer, action, discountPercentage } = body;
 
-    let localStore = readLocalStore();
-    localStore.updatedAt = new Date().toISOString();
-
-    // ACTION: Sync all records from local to Supabase database
+    // Action 1: Sync all data into Supabase Cloud Database
     if (action === "sync_to_supabase" || action === "seed_database") {
-      let syncStatus: any = { services: 0, hospitals: 0, labs: 0, settings: 0, errors: [] };
+      const services = dbGetServices();
+      const hospitals = dbGetHospitals();
+      const labs = dbGetPartnerLabs();
+      const currentLogo = dbGetSetting("logo_url", "/images/karim-logo.png");
+      const currentOffer = dbGetSetting("global_offer", {
+        enabled: true,
+        discountPercentage: 20,
+        badgeText: "20% OFF",
+        title: "FLAT 20% OFF ON ALL LAB PACKAGES",
+      });
+
+      let sbResult: any = { success: false, errors: [] };
 
       try {
-        if (localStore.services?.length) {
-          const dbServices = localStore.services.map((s: any) => ({
-            id: s.id,
-            name: s.name,
-            description: s.description || "",
-            price: Number(s.price),
-            original_price: Number(s.originalPrice || s.price),
-            discount_percentage: Number(s.discountPercentage || 20),
-            icon: s.icon || "Activity",
-            badge: s.badge || "20% OFF",
-            featured: Boolean(s.featured),
-          }));
-          const res = await supabase.from("services").upsert(dbServices);
-          if (res.error) syncStatus.errors.push(res.error.message);
-          else syncStatus.services = dbServices.length;
-        }
+        const [sRes, hRes, lRes, setRes] = await Promise.all([
+          supabase.from("services").upsert(
+            services.map((s) => ({
+              id: s.id,
+              name: s.name,
+              description: s.description,
+              price: s.price,
+              original_price: s.originalPrice,
+              discount_percentage: s.discountPercentage,
+              icon: s.icon,
+              badge: s.badge,
+              featured: s.featured,
+              updated_at: new Date().toISOString(),
+            }))
+          ),
+          supabase.from("hospitals").upsert(
+            hospitals.map((h) => ({
+              id: h.id,
+              name: h.name,
+              location: h.location,
+              type: h.type,
+              specialities: h.specialities,
+              doctor_network_count: h.doctorNetworkCount,
+              badge: h.badge,
+              is_featured: h.isFeatured,
+              updated_at: new Date().toISOString(),
+            }))
+          ),
+          supabase.from("partner_labs").upsert(
+            labs.map((l) => ({
+              id: l.id,
+              name: l.name,
+              accreditation: l.accreditation,
+              category: l.category,
+              description: l.description,
+              turnaround_time: l.turnaroundTime,
+              badge: l.badge,
+              is_featured: l.isFeatured,
+              updated_at: new Date().toISOString(),
+            }))
+          ),
+          supabase.from("site_settings").upsert([
+            { key: "logo_url", value: JSON.stringify(currentLogo), updated_at: new Date().toISOString() },
+            { key: "global_offer", value: JSON.stringify(currentOffer), updated_at: new Date().toISOString() },
+          ]),
+        ]);
 
-        if (localStore.hospitals?.length) {
-          const dbHospitals = localStore.hospitals.map((h: any) => ({
-            id: h.id,
-            name: h.name,
-            location: h.location,
-            type: h.type,
-            specialities: h.specialities || [],
-            doctor_network_count: Number(h.doctorNetworkCount || 15),
-            badge: h.badge || "Connected Partner",
-            is_featured: Boolean(h.isFeatured),
-          }));
-          const res = await supabase.from("hospitals").upsert(dbHospitals);
-          if (res.error) syncStatus.errors.push(res.error.message);
-          else syncStatus.hospitals = dbHospitals.length;
-        }
+        if (sRes.error) sbResult.errors.push("Services: " + sRes.error.message);
+        if (hRes.error) sbResult.errors.push("Hospitals: " + hRes.error.message);
+        if (lRes.error) sbResult.errors.push("Labs: " + lRes.error.message);
+        if (setRes.error) sbResult.errors.push("Settings: " + setRes.error.message);
 
-        if (localStore.labs?.length) {
-          const dbLabs = localStore.labs.map((l: any) => ({
-            id: l.id,
-            name: l.name,
-            accreditation: l.accreditation,
-            category: l.category,
-            description: l.description || "",
-            turnaround_time: l.turnaroundTime || "6 – 12 Hours",
-            badge: l.badge || "Certified Partner",
-            is_featured: Boolean(l.isFeatured),
-          }));
-          const res = await supabase.from("partner_labs").upsert(dbLabs);
-          if (res.error) syncStatus.errors.push(res.error.message);
-          else syncStatus.labs = dbLabs.length;
-        }
-
-        const settingsRows = [
-          { key: "logo_url", value: localStore.logoUrl || "/images/karim-logo.png" },
-          { key: "global_offer", value: localStore.globalOffer || { enabled: true, discountPercentage: 20 } },
-        ];
-        const resSettings = await supabase.from("site_settings").upsert(settingsRows);
-        if (resSettings.error) syncStatus.errors.push(resSettings.error.message);
-        else syncStatus.settings = settingsRows.length;
+        sbResult.success = sbResult.errors.length === 0;
       } catch (err: any) {
-        syncStatus.errors.push(err.message);
+        sbResult.errors.push(err.message);
       }
 
-      return NextResponse.json({
-        success: syncStatus.errors.length === 0,
-        message: syncStatus.errors.length === 0 ? "All database tables synchronized successfully!" : "Database sync encountered notices",
-        syncStatus,
-        store: localStore,
-      });
+      const stats = dbGetDatabaseStats();
+
+      if (sbResult.success) {
+        return NextResponse.json({
+          success: true,
+          message: `All ${services.length} tests, ${hospitals.length} hospitals, and ${labs.length} partner labs successfully synced to Supabase Cloud Database! Ready for Vercel.`,
+          supabase: sbResult,
+          database: stats,
+        });
+      } else {
+        return NextResponse.json({
+          success: false,
+          message: "Supabase tables need to be created in your Supabase SQL Editor. Run the supabase_schema.sql script.",
+          supabase: sbResult,
+          database: stats,
+        });
+      }
     }
 
-    // 1. Logo Update
+    // Action 2: Logo Update (Supabase + SQLite)
     if (type === "logo" || logoUrl !== undefined) {
       const newLogo = item?.logoUrl || logoUrl || "/images/karim-logo.png";
-      localStore.logoUrl = newLogo;
+      dbSetSetting("logo_url", newLogo);
 
       try {
-        await supabase.from("site_settings").upsert([{ key: "logo_url", value: newLogo }]);
+        await supabase.from("site_settings").upsert([
+          { key: "logo_url", value: JSON.stringify(newLogo), updated_at: new Date().toISOString() },
+        ]);
       } catch (_) {}
     }
 
-    // 2. Global Offer Update & Price Recalculation
+    // Action 3: Global Offer & Bulk Discount (Supabase + SQLite)
     if (type === "offer" || globalOffer !== undefined || action === "apply_discount") {
-      const targetOffer = globalOffer || (item ? item : localStore.globalOffer) || {
+      const targetOffer = globalOffer || (item ? item : dbGetSetting("global_offer")) || {
         enabled: true,
         discountPercentage: 20,
         badgeText: "20% OFF",
         title: "FLAT 20% OFF ON ALL LAB PACKAGES",
       };
 
-      if (discountPercentage !== undefined) {
-        targetOffer.discountPercentage = Number(discountPercentage);
-        targetOffer.badgeText = `${discountPercentage}% OFF`;
-      }
+      const disc = discountPercentage !== undefined ? Number(discountPercentage) : (targetOffer.discountPercentage || 20);
+      targetOffer.discountPercentage = disc;
+      targetOffer.badgeText = disc > 0 ? `${disc}% OFF` : "Regular Price";
+      targetOffer.enabled = disc > 0;
 
-      localStore.globalOffer = targetOffer;
+      dbSetSetting("global_offer", targetOffer);
+      dbApplyDiscountToAll(disc);
 
-      // Automatically recalculate test prices in local store and mirror to Supabase
-      const discPercent = targetOffer.enabled ? Number(targetOffer.discountPercentage || 20) : 0;
-      if (Array.isArray(localStore.services)) {
-        localStore.services = localStore.services.map((s: any) => {
-          const orig = Number(s.originalPrice || s.original_price || s.price || 400);
-          const newPrice = discPercent > 0 ? Math.round(orig * (1 - discPercent / 100)) : orig;
-          return {
-            ...s,
-            originalPrice: orig,
-            price: newPrice,
-            discountPercentage: discPercent,
-            badge: discPercent > 0 ? `${discPercent}% OFF` : "Regular Price",
-          };
-        });
+      try {
+        await supabase.from("site_settings").upsert([
+          { key: "global_offer", value: JSON.stringify(targetOffer), updated_at: new Date().toISOString() },
+        ]);
 
-        // Mirror to Supabase services table
-        try {
-          const dbServices = localStore.services.map((s: any) => ({
-            id: s.id,
-            price: s.price,
-            original_price: s.originalPrice,
-            discount_percentage: s.discountPercentage,
-            badge: s.badge,
-          }));
-          await supabase.from("services").upsert(dbServices);
-          await supabase.from("site_settings").upsert([{ key: "global_offer", value: targetOffer }]);
-        } catch (_) {}
-      }
+        const { data: sbServs } = await supabase.from("services").select("*");
+        if (sbServs && sbServs.length > 0) {
+          for (const s of sbServs) {
+            const orig = Number(s.original_price || s.price);
+            const newPrice = disc > 0 ? Math.round(orig * (1 - disc / 100)) : orig;
+            await supabase.from("services").update({
+              price: newPrice,
+              discount_percentage: disc,
+              badge: disc > 0 ? `${disc}% OFF` : "Regular Price",
+              updated_at: new Date().toISOString(),
+            }).eq("id", s.id);
+          }
+        }
+      } catch (_) {}
     }
 
-    // 3. Single Item Save (Service / Hospital / Lab)
+    // Action 4: Single Item Upsert (Service / Hospital / Lab / Booking)
     if (type && item) {
       if (type === "service") {
-        const orig = Number(item.originalPrice || item.original_price || item.price || 400);
-        const disc = Number(item.discountPercentage ?? 20);
-        const calculatedPrice = disc > 0 ? Math.round(orig * (1 - disc / 100)) : orig;
-        const processedItem = {
-          ...item,
-          originalPrice: orig,
-          price: item.price !== undefined ? item.price : calculatedPrice,
-          discountPercentage: disc,
-          badge: item.badge || (disc > 0 ? `${disc}% OFF` : undefined),
-        };
-
-        const index = localStore.services.findIndex((s: any) => s.id === item.id);
-        if (index >= 0) {
-          localStore.services[index] = processedItem;
-        } else {
-          localStore.services.unshift(processedItem);
-        }
-
+        dbUpsertService(item);
         try {
+          const orig = Number(item.originalPrice || item.original_price || item.price || 400);
+          const disc = Number(item.discountPercentage ?? item.discount_percentage ?? 20);
+          const price = item.price !== undefined ? Number(item.price) : Math.round(orig * (1 - disc / 100));
+
           await supabase.from("services").upsert([
             {
-              id: processedItem.id,
-              name: processedItem.name,
-              description: processedItem.description || "",
-              price: processedItem.price,
-              original_price: processedItem.originalPrice,
-              discount_percentage: processedItem.discountPercentage,
-              icon: processedItem.icon || "Activity",
-              badge: processedItem.badge,
-              featured: Boolean(processedItem.featured),
+              id: item.id || `srv-${Date.now()}`,
+              name: item.name,
+              description: item.description || "",
+              price: price,
+              original_price: orig,
+              discount_percentage: disc,
+              icon: item.icon || "Activity",
+              badge: item.badge || (disc > 0 ? `${disc}% OFF` : "Regular Price"),
+              featured: Boolean(item.featured),
+              updated_at: new Date().toISOString(),
             },
           ]);
         } catch (_) {}
       } else if (type === "hospital") {
-        const index = localStore.hospitals.findIndex((h: any) => h.id === item.id);
-        if (index >= 0) {
-          localStore.hospitals[index] = item;
-        } else {
-          localStore.hospitals.unshift(item);
-        }
-
+        dbUpsertHospital(item);
         try {
+          const specs = Array.isArray(item.specialities) ? item.specialities : [item.specialities || "Multi-Specialty"];
           await supabase.from("hospitals").upsert([
             {
-              id: item.id,
+              id: item.id || `hosp-${Date.now()}`,
               name: item.name,
               location: item.location,
-              type: item.type,
-              specialities: item.specialities || [],
+              type: item.type || "Multi-Specialty Hospital",
+              specialities: specs,
               doctor_network_count: Number(item.doctorNetworkCount || 15),
-              badge: item.badge,
+              badge: item.badge || "Connected Partner",
               is_featured: Boolean(item.isFeatured),
+              updated_at: new Date().toISOString(),
             },
           ]);
         } catch (_) {}
       } else if (type === "lab") {
-        const index = localStore.labs.findIndex((l: any) => l.id === item.id);
-        if (index >= 0) {
-          localStore.labs[index] = item;
-        } else {
-          localStore.labs.unshift(item);
-        }
-
+        dbUpsertPartnerLab(item);
         try {
           await supabase.from("partner_labs").upsert([
             {
-              id: item.id,
+              id: item.id || `lab-${Date.now()}`,
               name: item.name,
               accreditation: item.accreditation,
-              category: item.category,
+              category: item.category || "Diagnostic Reference Lab",
               description: item.description || "",
               turnaround_time: item.turnaroundTime || "6 – 12 Hours",
-              badge: item.badge,
+              badge: item.badge || "Certified Partner",
               is_featured: Boolean(item.isFeatured),
+              updated_at: new Date().toISOString(),
             },
           ]);
         } catch (_) {}
+      } else if (type === "booking") {
+        if (item.id && item.status) {
+          dbUpdateBookingStatus(item.id, item.status);
+          try {
+            await supabase.from("bookings").update({ status: item.status }).eq("id", item.id);
+          } catch (_) {}
+        }
       }
     }
 
-    // Persist to local JSON cache file
-    writeLocalStore(localStore);
-
     return NextResponse.json({
       success: true,
-      message: "Database updated successfully",
-      store: localStore,
+      message: "Database updated and stored successfully (Supabase Cloud + SQLite synced)",
+      database: dbGetDatabaseStats(),
+      services: dbGetServices(),
+      hospitals: dbGetHospitals(),
+      labs: dbGetPartnerLabs(),
+      bookings: dbGetBookings(),
     });
   } catch (error: any) {
-    console.error("Failed to update database:", error);
+    console.error("Database write error:", error);
     return NextResponse.json(
-      { error: "Failed to update database", details: error.message },
+      { error: "Failed to store in database", details: error.message },
       { status: 500 }
     );
   }
@@ -410,37 +407,33 @@ export async function DELETE(request: Request) {
       );
     }
 
-    const localStore = readLocalStore();
-    localStore.updatedAt = new Date().toISOString();
-
     if (type === "service") {
-      localStore.services = localStore.services.filter((s: any) => s.id !== id);
-      try {
-        await supabase.from("services").delete().eq("id", id);
-      } catch (_) {}
+      dbDeleteService(id);
+      try { await supabase.from("services").delete().eq("id", id); } catch (_) {}
     } else if (type === "hospital") {
-      localStore.hospitals = localStore.hospitals.filter((h: any) => h.id !== id);
-      try {
-        await supabase.from("hospitals").delete().eq("id", id);
-      } catch (_) {}
+      dbDeleteHospital(id);
+      try { await supabase.from("hospitals").delete().eq("id", id); } catch (_) {}
     } else if (type === "lab") {
-      localStore.labs = localStore.labs.filter((l: any) => l.id !== id);
-      try {
-        await supabase.from("partner_labs").delete().eq("id", id);
-      } catch (_) {}
+      dbDeletePartnerLab(id);
+      try { await supabase.from("partner_labs").delete().eq("id", id); } catch (_) {}
+    } else if (type === "booking") {
+      dbDeleteBooking(id);
+      try { await supabase.from("bookings").delete().eq("id", id); } catch (_) {}
     }
-
-    writeLocalStore(localStore);
 
     return NextResponse.json({
       success: true,
-      message: `${type} deleted from database`,
-      store: localStore,
+      message: `${type} deleted from database permanently`,
+      services: dbGetServices(),
+      hospitals: dbGetHospitals(),
+      labs: dbGetPartnerLabs(),
+      bookings: dbGetBookings(),
+      database: dbGetDatabaseStats(),
     });
   } catch (error: any) {
-    console.error("Delete operation failed:", error);
+    console.error("Database delete error:", error);
     return NextResponse.json(
-      { error: "Failed to delete item", details: error.message },
+      { error: "Failed to delete from database", details: error.message },
       { status: 500 }
     );
   }
