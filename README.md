@@ -116,7 +116,7 @@ When a patient books a test, their information is mapped into standard HubSpot C
 | :--- | :--- | :--- |
 | `firstname` | Patient First Name | Extracted from full name |
 | `lastname` | Patient Last Name | Remaining part of full name |
-| `phone` | `9876543210` | Patient 10-digit mobile number |
+| `phone` | `0000000000` | Patient 10-digit mobile number |
 | `address` | Full Address & Landmark | Doorstep collection address in Patna |
 | `city` | Patna | Default service city |
 | `state` | Bihar | State |
@@ -134,8 +134,8 @@ Dispatches a new patient booking directly to HubSpot CRM and prepares booking da
   ```json
   {
     "refCode": "#KPL-138896",
-    "fullName": "Sudhanshu shekhar",
-    "mobile": "7488207433",
+    "fullName": "Rohit Raj",
+    "mobile": "0000000000",
     "testType": "Complete Blood Count (CBC)",
     "prefDate": "22 Sep 2026",
     "timeSlot": "Morning (6:00 AM – 9:00 AM)",
