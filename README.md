@@ -2,14 +2,14 @@
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.2.10-black?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-18.3.0-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
-[![Neon Database](https://img.shields.io/badge/Neon_PostgreSQL-Serverless-00E599?style=for-the-badge&logo=postgresql&logoColor=white)](https://neon.tech/)
+[![HubSpot CRM](https://img.shields.io/badge/HubSpot_CRM-Leads_&_Contacts-FF7A59?style=for-the-badge&logo=hubspot&logoColor=white)](https://www.hubspot.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4.10-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![Motion](https://img.shields.io/badge/Motion-13.2.0-FF0055?style=for-the-badge&logo=framer&logoColor=white)](https://motion.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
 A modern, high-performance web application and **Digital Booking Pass Generator** built for **Karim Path Lab** operating in **Patna, Bihar**. 
 
-Connects patients directly with certified phlebotomist **Saba Hussain**, Patna's leading specialist doctors, and NABL-accredited diagnostic laboratories with doorstep blood and urine sample pick-up, automated **FLAT 20% OFF** discount calculation, instant pass downloads, and direct **Neon PostgreSQL** database storage.
+Connects patients directly with certified phlebotomist **Saba Hussain**, Patna's leading specialist doctors, and NABL-accredited diagnostic laboratories with doorstep blood and urine sample pick-up, automated **FLAT 20% OFF** discount calculation, instant pass auto-downloads, and direct **HubSpot CRM** contact & lead synchronization (zero database setup required).
 
 ---
 
@@ -25,10 +25,11 @@ Connects patients directly with certified phlebotomist **Saba Hussain**, Patna's
   - **Dengue & Fever Panel**: ₹800 (MRP: ₹1,000 · Save ₹200)
   - **★ Full Body Health Checkup Package**: ₹2,000 (MRP: ₹2,500 · 60+ Vital Parameters)
 
-### 2. 🗄️ Neon PostgreSQL Database Integration
-- Connected via `@neondatabase/serverless` using pooled connection strings.
-- **Bookings Persistence**: Automatically stores all patient submissions (patient name, mobile, test package, appointment date, time slot, complete address, price, savings, ref code `#KPL-XXXXXX`, status, timestamp).
-- **Reviews & Feedback Persistence**: Live patient ratings (1 to 5 stars) and feedback comments are saved directly into the database and dynamically rendered across all sessions.
+### 2. 🎯 HubSpot CRM Lead Integration (Zero Database Required)
+- **Zero SQL Database Maintenance**: No Postgres or MySQL setup required.
+- **Direct CRM Synchronization**: Whenever a patient books a test or creates a pass, their details (Name, Mobile Number, Test Package, Appointment Date, Time Slot, Doorstep Address, Ref Code, and Pricing) are dispatched to **HubSpot CRM** as a Contact & Lead!
+- Supports both **HubSpot Private App Token** (`HUBSPOT_ACCESS_TOKEN`) or **HubSpot Form Submission API** (`HUBSPOT_PORTAL_ID` & `HUBSPOT_FORM_ID`).
+- The clinic team can manage patient calls, technician visits, and statuses right from the HubSpot CRM dashboard or mobile app.
 
 ### 3. 💳 Dynamic HTML5 Canvas Pass Generator with Auto-Download
 - Generates high-definition Retina-grade (`2x DPR`) PNG booking passes on the fly.
@@ -40,7 +41,7 @@ Connects patients directly with certified phlebotomist **Saba Hussain**, Patna's
 ### 4. ⭐ Interactive Patient Reviews & Rating System
 - **Interactive 1 to 5 Star Rating Selector** with real-time hover and click feedback.
 - Patient Name, Patna Area/Locality, and review message inputs.
-- Instant submission to Neon DB with a **Verified Patient** badge.
+- Instant submission with a **Verified Patient** badge.
 - Optional direct WhatsApp forwarding button.
 
 ### 5. 🎨 Clinical Emerald Theme & Animations
@@ -55,7 +56,7 @@ Connects patients directly with certified phlebotomist **Saba Hussain**, Patna's
 
 ```
 karim-path-lab/
-├── .env.local                          # Neon DB PostgreSQL environment variables
+├── .env.local                          # HubSpot CRM credentials (ignored in Git)
 ├── .gitignore                          # Git ignore rules (protects credentials & build output)
 ├── next.config.js                      # Next.js configuration
 ├── package.json                        # Dependencies (Next 16, React 18, Neon, Motion, Lucide)
@@ -100,43 +101,27 @@ karim-path-lab/
     ├── data/
     │   └── testsData.ts                # Packages, pricing, initial reviews & lab contacts
     ├── lib/
-    │   └── db.ts                       # Neon PostgreSQL client, connection pool & schema init
+    │   └── hubspot.ts                  # HubSpot CRM contacts & form submission integration
     └── types/
         └── booking.ts                  # TypeScript interfaces (TestPackage, BookingPassData, ReviewItem)
 ```
 
 ---
 
-## 🗄️ Database Schema (Neon PostgreSQL)
+## 🎯 HubSpot CRM Lead Properties Mapping
 
-The database tables are automatically initialized by [src/lib/db.ts](file:///e:/Othear/karim-path-lab/src/lib/db.ts) on first execution:
+When a patient books a test, their information is mapped into standard HubSpot CRM Contact properties:
 
-### 1. `bookings` Table
-| Column | Type | Description |
+| HubSpot Property | Value Sent | Description |
 | :--- | :--- | :--- |
-| `id` | `SERIAL PRIMARY KEY` | Unique booking identifier |
-| `ref_code` | `VARCHAR(50) UNIQUE` | Unique reference code (e.g. `#KPL-138896`) |
-| `patient_name` | `VARCHAR(255)` | Patient's full name |
-| `mobile` | `VARCHAR(20)` | 10-digit mobile number |
-| `test_type` | `VARCHAR(255)` | Selected diagnostic test or package |
-| `pref_date` | `VARCHAR(50)` | Preferred appointment date |
-| `time_slot` | `VARCHAR(100)` | Morning, Forenoon, Afternoon, or Evening slot |
-| `address` | `TEXT` | Complete doorstep address & landmark in Patna |
-| `price` | `INT` | Net discounted fee payable (INR) |
-| `original_price`| `INT` | Original MRP fee (INR) |
-| `discount_amount`| `INT` | Savings amount (Flat 20% OFF) |
-| `status` | `VARCHAR(50)` | Status (`CONFIRMED`, `PENDING`, `COMPLETED`) |
-| `created_at` | `TIMESTAMPTZ` | Timestamp of booking creation |
-
-### 2. `reviews` Table
-| Column | Type | Description |
-| :--- | :--- | :--- |
-| `id` | `SERIAL PRIMARY KEY` | Unique review identifier |
-| `name` | `VARCHAR(255)` | Reviewer / Patient name |
-| `location` | `VARCHAR(255)` | Locality in Patna (e.g. Kankarbagh, Boring Road) |
-| `rating` | `INT (1-5)` | Star rating given by patient |
-| `comment` | `TEXT` | Review feedback comment |
-| `verified` | `BOOLEAN` | Verified patient badge flag |
+| `firstname` | Patient First Name | Extracted from full name |
+| `lastname` | Patient Last Name | Remaining part of full name |
+| `phone` | `9876543210` | Patient 10-digit mobile number |
+| `address` | Full Address & Landmark | Doorstep collection address in Patna |
+| `city` | Patna | Default service city |
+| `state` | Bihar | State |
+| `message` | Test details, Date, Slot, Fee & Ref Code | Full booking summary note |
+| `hs_lead_status` | `NEW` | Status for CRM sales & clinic workflow |
 | `created_at` | `TIMESTAMPTZ` | Timestamp of submission |
 
 ---
@@ -144,7 +129,7 @@ The database tables are automatically initialized by [src/lib/db.ts](file:///e:/
 ## 🔌 API Endpoints Reference
 
 ### `POST /api/bookings`
-Creates a new patient booking in Neon PostgreSQL.
+Dispatches a new patient booking directly to HubSpot CRM and prepares booking data.
 - **Request Body**:
   ```json
   {
@@ -165,7 +150,7 @@ Creates a new patient booking in Neon PostgreSQL.
 Fetches the latest bookings ordered by creation timestamp.
 
 ### `GET /api/reviews`
-Fetches all patient reviews from Neon PostgreSQL ordered by newest first.
+Fetches all patient reviews ordered by newest first.
 - **Response**: `{ "success": true, "reviews": [ ... ] }`
 
 ### `POST /api/reviews`
@@ -197,13 +182,17 @@ cd karim-path-lab
 npm install
 ```
 
-### 3. Setup Environment Variables
+### 3. Setup Environment Variables (Optional)
 Create a `.env.local` file in the root directory:
 ```env
-DATABASE_URL=postgresql://neondb_owner:YOUR_PASSWORD@YOUR_HOST-pooler.c-12.us-east-1.aws.neon.tech/neondb?channel_binding=require&sslmode=require
-DATABASE_URL_UNPOOLED=postgresql://neondb_owner:YOUR_PASSWORD@YOUR_HOST.c-12.us-east-1.aws.neon.tech/neondb?sslmode=require
-POSTGRES_URL=postgresql://neondb_owner:YOUR_PASSWORD@YOUR_HOST-pooler.c-12.us-east-1.aws.neon.tech/neondb?channel_binding=require&sslmode=require
+# HubSpot Private App Access Token (from HubSpot Settings -> Integrations -> Private Apps)
+HUBSPOT_ACCESS_TOKEN=your_hubspot_access_token_here
+
+# Or alternatively using HubSpot Form Submission API:
+# HUBSPOT_PORTAL_ID=your_portal_id
+# HUBSPOT_FORM_ID=your_form_guid
 ```
+*(Note: If you don't add a HubSpot token yet, the application runs automatically with local lead logging and auto-downloads the pass without any errors!)*
 
 ### 4. Run Development Server
 ```bash

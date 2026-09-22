@@ -239,7 +239,7 @@ export default function BookingModal({
                 <p className="text-[11px] text-slate-500 font-medium">
                   {step === "form"
                     ? "Fill patient details to create official booking pass"
-                    : "Booking confirmed & saved to database. Your pass has been downloaded."}
+                    : "Booking confirmed! Your official pass has been downloaded to your device."}
                 </p>
               </div>
               <button
@@ -449,7 +449,7 @@ export default function BookingModal({
                     <div className="flex items-center gap-2">
                       <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 live-dot"></span>
                       <span className="font-bold text-emerald-950">
-                        ✅ Booking Saved to Database &amp; Pass Auto-Downloaded!
+                        ✅ Booking Confirmed &amp; Pass Auto-Downloaded!
                       </span>
                     </div>
                     {passData && (
@@ -507,7 +507,7 @@ export default function BookingModal({
                       <span>← Book Another Visit / New Test</span>
                     </button>
                     <span className="text-[11px] font-semibold text-slate-500">
-                      Auto-downloaded · Saved in Neon DB
+                      Auto-downloaded · Pass Verified
                     </span>
                   </div>
                 </div>
