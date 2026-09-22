@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import PageLoader from "@/components/PageLoader";
 import {
   Home,
   LayoutDashboard,
@@ -457,12 +458,13 @@ export default function AdminDashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F4F7FB] flex items-center justify-center text-slate-700">
-        <div className="flex flex-col items-center gap-3 bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
-          <div className="w-10 h-10 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-          <p className="font-sans text-xs text-slate-600 font-medium">Loading Karim Path Lab Control Center...</p>
-        </div>
-      </div>
+      <PageLoader
+        title="Karim Path Lab"
+        subtitle="Control Center & Live Pricing Engine"
+        badge="SaaS Admin Suite"
+        theme="blue"
+        logoUrl={logoUrl}
+      />
     );
   }
 
