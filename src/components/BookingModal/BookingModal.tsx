@@ -384,7 +384,7 @@ _Hello Saba ji, please confirm my home blood test booking._`;
                           name="fullName"
                           value={formData.fullName}
                           onChange={handleChange}
-                          placeholder="e.g. Ramesh Kumar"
+                          placeholder="Enter Full Name"
                           className={`w-full bg-slate-50 border rounded-xl pl-10 pr-4 py-3 text-sm text-slate-900 font-medium placeholder-slate-400 ${
                             errors.fullName ? "border-rose-500" : "border-slate-200"
                           }`}
