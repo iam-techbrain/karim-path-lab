@@ -30,7 +30,8 @@ export default function LabTestsGrid({ onOpenBooking }: LabTestsGridProps) {
     }
   };
 
-  const [testList, setTestList] = React.useState(TEST_PACKAGES);
+  const [testList, setTestList] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
     fetch("/api/admin/data")
@@ -38,9 +39,15 @@ export default function LabTestsGrid({ onOpenBooking }: LabTestsGridProps) {
       .then((data) => {
         if (data.services && data.services.length > 0) {
           setTestList(data.services);
+        } else {
+          setTestList(TEST_PACKAGES);
         }
       })
-      .catch((err) => console.log("Live services sync fallback:", err));
+      .catch((err) => {
+        console.log("Live services sync fallback:", err);
+        setTestList(TEST_PACKAGES);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const regularTests = testList.filter((t) => !t.featured);

@@ -51,7 +51,8 @@ import {
   Layers,
   BarChart3,
   Link2,
-  FileCheck
+  FileCheck,
+  Database
 } from "lucide-react";
 import { TestPackage, ConnectedHospital, PartnerLab } from "@/types/booking";
 
@@ -287,6 +288,30 @@ export default function AdminDashboardPage() {
       showToast("error", "Failed to reset logo");
     } finally {
       setSavingLogo(false);
+    }
+  };
+
+  const [syncingDb, setSyncingDb] = useState(false);
+
+  const handleSyncToDatabase = async () => {
+    setSyncingDb(true);
+    try {
+      const res = await fetch("/api/admin/data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "sync_to_supabase" }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast("success", "Supabase Database synchronized successfully! All tables up to date.");
+      } else {
+        showToast("error", "Database Sync: " + (data.syncStatus?.errors?.join("; ") || "Schema ready in supabase_schema.sql"));
+      }
+      await fetchData();
+    } catch (err: any) {
+      showToast("error", "Failed to sync with Supabase: " + err.message);
+    } finally {
+      setSyncingDb(false);
     }
   };
 
@@ -858,6 +883,16 @@ export default function AdminDashboardPage() {
                   </div>
 
                   <div className="flex items-center gap-2.5">
+                    <button
+                      onClick={handleSyncToDatabase}
+                      disabled={syncingDb}
+                      className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-2"
+                      title="Sync all services, hospitals, labs, and settings with Supabase"
+                    >
+                      <Database className={`w-3.5 h-3.5 ${syncingDb ? "animate-spin" : ""}`} />
+                      <span>{syncingDb ? "Syncing..." : "Sync Database"}</span>
+                    </button>
+
                     <button
                       onClick={() => openAddModal("service")}
                       className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-2"

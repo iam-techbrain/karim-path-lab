@@ -22,22 +22,30 @@ interface PartnerNetworkSectionProps {
 
 export default function PartnerNetworkSection({ onOpenBooking }: PartnerNetworkSectionProps) {
   const [activeTab, setActiveTab] = useState<"labs" | "hospitals" | "howItWorks">("labs");
-  const [hospitals, setHospitals] = useState<ConnectedHospital[]>(INITIAL_HOSPITALS);
-  const [labs, setLabs] = useState<PartnerLab[]>(INITIAL_PARTNER_LABS);
+  const [hospitals, setHospitals] = useState<ConnectedHospital[]>([]);
+  const [labs, setLabs] = useState<PartnerLab[]>([]);
 
-  // Sync with live admin store
+  // Sync directly from database API
   useEffect(() => {
     fetch("/api/admin/data")
       .then((res) => res.json())
       .then((data) => {
         if (data.hospitals && data.hospitals.length > 0) {
           setHospitals(data.hospitals);
+        } else {
+          setHospitals(INITIAL_HOSPITALS);
         }
         if (data.labs && data.labs.length > 0) {
           setLabs(data.labs);
+        } else {
+          setLabs(INITIAL_PARTNER_LABS);
         }
       })
-      .catch((err) => console.log("Live network data load fallback:", err));
+      .catch((err) => {
+        console.log("Live network data load fallback:", err);
+        setHospitals(INITIAL_HOSPITALS);
+        setLabs(INITIAL_PARTNER_LABS);
+      });
   }, []);
 
   return (

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { sendBookingToHubSpot } from "@/lib/hubspot";
+import { supabase } from "@/lib/supabase";
 
 export async function POST(request: Request) {
   try {
@@ -24,9 +25,30 @@ export async function POST(request: Request) {
       );
     }
 
-    // Forward lead directly to HubSpot CRM
+    const bookingRef = refCode || `#KPL-${Math.floor(100000 + Math.random() * 900000)}`;
+
+    // 1. Persist to Supabase database
+    try {
+      await supabase.from("bookings").insert([
+        {
+          ref_code: bookingRef,
+          full_name: fullName,
+          mobile,
+          test_type: testType,
+          pref_date: prefDate,
+          time_slot: timeSlot,
+          address,
+          price: price || 0,
+          original_price: originalPrice || 0,
+        },
+      ]);
+    } catch (sbErr) {
+      console.log("Supabase bookings table insert notice:", sbErr);
+    }
+
+    // 2. Forward lead directly to HubSpot CRM
     const hubspotResult = await sendBookingToHubSpot({
-      refCode: refCode || `#KPL-${Math.floor(100000 + Math.random() * 900000)}`,
+      refCode: bookingRef,
       fullName,
       mobile,
       testType,
